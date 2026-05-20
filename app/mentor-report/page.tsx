@@ -75,7 +75,7 @@ export default function MentorReportPage() {
   };
 
   return (
-    <div className="p-6 flex flex-col gap-6">
+    <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
       <SrmHeader />
 
       {error && (

@@ -121,7 +121,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-6 flex flex-col gap-6">
+    <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
       <SrmHeader />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -138,14 +138,14 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="bg-[#dce8f8] rounded-xl p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-[#dce8f8] rounded-xl p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
         {/* ── PIE CHART ── */}
         <div className="flex flex-col items-center">
           <p className="font-black text-gray-900 text-base uppercase tracking-widest mb-1">
             {pieTitle}
           </p>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
                 data={pieSrc}
@@ -189,7 +189,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart
               data={barData}
               margin={{ top: 40, right: 30, left: 10, bottom: 5 }}
