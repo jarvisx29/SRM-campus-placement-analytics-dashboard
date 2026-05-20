@@ -17,3 +17,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Remove focus outline on Recharts SVG elements */
+.recharts-wrapper,
+.recharts-wrapper svg,
+.recharts-wrapper *:focus {
+  outline: none !important;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

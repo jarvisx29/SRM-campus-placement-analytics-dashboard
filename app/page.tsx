@@ -88,7 +88,7 @@ export default function DashboardPage() {
   }) => {
     const { cx = 0, cy = 0, midAngle = 0, outerRadius = 0, value = 0 } = props;
     if (!value) return null;
-    const radius = outerRadius + 26;
+    const radius = outerRadius + 20;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return (
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 dataKey="value"
                 cx="45%"
                 cy="50%"
-                outerRadius={115}
+                outerRadius={90}
                 labelLine={false}
                 label={renderPieLabel}
                 stroke="none"
