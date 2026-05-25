@@ -65,7 +65,7 @@ export default function DashboardPage() {
         { name: "Placed",        value: summary.placed },
         { name: "Higher Studies",value: summary.higherStudies },
         { name: "Not Placed",    value: summary.notPlaced },
-        { name: "Not Eligible",  value: summary.notEligible },
+        { name: "NA",            value: summary.notEligible },
       ].filter((d) => d.value > 0);
 
   const pieTitle = hasOfferTypes ? "Offers" : "Student Status";

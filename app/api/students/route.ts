@@ -121,7 +121,7 @@ export async function GET(request: Request) {
     const placed = students.filter((s) => s.placed === "YES").length;
     const higherStudies = students.filter((s) => s.category === "HS").length;
     const placementCount = students.filter((s) => s.category === "PLACEMENT").length;
-    const notEligible = students.filter((s) => s.placed === "NE").length;
+    const notEligible = students.filter((s) => s.placed === "NA").length;
     const notPlaced = students.filter((s) => s.placed === "NO").length;
 
     const totalOffers = students.reduce((acc, s) => {
