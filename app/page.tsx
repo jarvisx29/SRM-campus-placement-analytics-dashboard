@@ -199,9 +199,10 @@ export default function DashboardPage() {
               <YAxis hide />
               <Tooltip
                 cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                labelFormatter={() => ""}
                 formatter={(v, _, p) => [v, p.payload?.label]}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={80}>
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={80} minPointSize={4}>
                 {barData.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />
                 ))}
