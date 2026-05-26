@@ -58,7 +58,7 @@ async function fetchSheetData(): Promise<Student[]> {
   const [, ...dataRows] = rows;
 
   return dataRows
-    .filter((row) => row[17] || row[18])
+    .filter((row) => row[1] || row[17] || row[18])
     .map((row) => ({
       sno: row[0] || "",
       category: row[1] || "",
