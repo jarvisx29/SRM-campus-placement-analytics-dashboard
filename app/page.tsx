@@ -27,6 +27,7 @@ const ROW2 = [
 const STATUS_COLORS = ["#2196f3", "#26c6da", "#7c3aed", "#ff9800"];
 
 const BAR_ITEMS = [
+  { key: "rfPlacement",   label: "RF Placement",   fill: "#e91e63" },
   { key: "placed",        label: "Placed",         fill: "#43a047" },
   { key: "higherStudies", label: "Higher Studies", fill: "#f48fb1" },
 ];
@@ -70,6 +71,7 @@ export default function DashboardPage() {
   const pieTitle = hasOfferTypes ? "Offers" : "Student Status";
 
   const summaryRecord: Record<string, number> = {
+    rfPlacement:   summary.rfPlacement,
     placed:        summary.placed,
     higherStudies: summary.higherStudies,
   };

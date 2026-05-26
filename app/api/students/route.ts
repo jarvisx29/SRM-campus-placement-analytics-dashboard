@@ -124,6 +124,10 @@ export async function GET(request: Request) {
     const notEligible = students.filter((s) => s.placed === "NE").length;
     const notPlaced = students.filter((s) => s.placed === "NO").length;
 
+    const rfPlacement = students.filter(
+      (s) => s.placed && !["YES", "NO", "NE", "NA"].includes(s.placed.trim())
+    ).length;
+
     const totalOffers = students.reduce((acc, s) => {
       return (
         acc +
@@ -156,6 +160,7 @@ export async function GET(request: Request) {
         placementCount,
         notPlaced,
         notEligible,
+        rfPlacement,
         totalOffers,
       },
       offerTypeCounts,

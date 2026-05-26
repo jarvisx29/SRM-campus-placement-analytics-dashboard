@@ -22,6 +22,7 @@ export interface Summary {
   placementCount: number;
   notPlaced: number;
   notEligible: number;
+  rfPlacement: number;
   totalOffers: number;
 }
 
