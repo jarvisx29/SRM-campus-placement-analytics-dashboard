@@ -27,9 +27,8 @@ const ROW2 = [
 const STATUS_COLORS = ["#2196f3", "#26c6da", "#7c3aed", "#ff9800"];
 
 const BAR_ITEMS = [
-  { key: "notEligible",    label: "RF Placement",   fill: "#e91e63" },
-  { key: "higherStudies",  label: "Higher Studies", fill: "#f48fb1" },
-  { key: "placementCount", label: "Placement",      fill: "#5c6bc0" },
+  { key: "placed",        label: "Placed",         fill: "#43a047" },
+  { key: "higherStudies", label: "Higher Studies", fill: "#f48fb1" },
 ];
 
 export default function DashboardPage() {
@@ -65,15 +64,14 @@ export default function DashboardPage() {
         { name: "Placed",        value: summary.placed },
         { name: "Higher Studies",value: summary.higherStudies },
         { name: "Not Placed",    value: summary.notPlaced },
-        { name: "NA",            value: summary.notEligible },
+        { name: "Not Eligible",  value: summary.notEligible },
       ].filter((d) => d.value > 0);
 
   const pieTitle = hasOfferTypes ? "Offers" : "Student Status";
 
   const summaryRecord: Record<string, number> = {
-    notEligible:    summary.notEligible,
-    higherStudies:  summary.higherStudies,
-    placementCount: summary.placementCount,
+    placed:        summary.placed,
+    higherStudies: summary.higherStudies,
   };
   const barData = BAR_ITEMS.map((item) => ({
     label: item.label,
