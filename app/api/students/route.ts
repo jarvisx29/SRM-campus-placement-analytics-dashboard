@@ -93,10 +93,16 @@ async function fetchSheetData(): Promise<Student[]> {
     }));
 }
 
+function getDept(cls: string): string {
+  const parts = cls.trim().split(/\s+/);
+  return parts.length <= 1 ? cls.trim() : parts.slice(0, -1).join(" ");
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mentor = searchParams.get("mentor") || "";
   const category = searchParams.get("category") || "";
+  const dept = searchParams.get("dept") || "";
 
   try {
     if (!cache || Date.now() - cache.ts > CACHE_TTL) {
@@ -115,6 +121,9 @@ export async function GET(request: Request) {
       students = students.filter(
         (s) => s.category.toLowerCase() === category.toLowerCase()
       );
+    }
+    if (dept) {
+      students = students.filter((s) => getDept(s.class) === dept);
     }
 
     const totalStudents = students.length;
@@ -151,6 +160,9 @@ export async function GET(request: Request) {
     const categories = [
       ...new Set(cache.data.map((s) => s.category).filter(Boolean)),
     ].sort();
+    const departments = [
+      ...new Set(cache.data.map((s) => getDept(s.class)).filter(Boolean)),
+    ].sort();
 
     return NextResponse.json({
       summary: {
@@ -166,6 +178,7 @@ export async function GET(request: Request) {
       offerTypeCounts,
       mentors,
       categories,
+      departments,
       students: students.map((s) => ({
         registerNo: s.registerNo,
         studentName: s.studentName,

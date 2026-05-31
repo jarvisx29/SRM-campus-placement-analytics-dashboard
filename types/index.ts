@@ -38,5 +38,6 @@ export interface DashboardData {
   offerTypeCounts: OfferTypeCounts;
   mentors: string[];
   categories: string[];
+  departments: string[];
   students: StudentRow[];
 }

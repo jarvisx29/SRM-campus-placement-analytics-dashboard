@@ -16,17 +16,19 @@ export default function StudentDetailPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [mentor, setMentor] = useState("");
   const [category, setCategory] = useState("");
+  const [dept, setDept] = useState("");
   const [company, setCompany] = useState("");
   const [offerCategory, setOfferCategory] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [error, setError] = useState("");
 
-  const fetchData = useCallback(async (m: string, c: string) => {
+  const fetchData = useCallback(async (m: string, c: string, d: string) => {
     setError("");
     const params = new URLSearchParams();
     if (m) params.set("mentor", m);
     if (c) params.set("category", c);
+    if (d) params.set("dept", d);
     try {
       const res = await fetch(`/api/students?${params}`);
       const json = await res.json();
@@ -38,8 +40,8 @@ export default function StudentDetailPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(mentor, category);
-  }, [mentor, category, fetchData]);
+    fetchData(mentor, category, dept);
+  }, [mentor, category, dept, fetchData]);
 
   const allStudents = data?.students ?? [];
 
@@ -93,6 +95,13 @@ export default function StudentDetailPage() {
 
       <div className="bg-[#1565c0] rounded-xl px-4 py-3 flex flex-wrap gap-3 items-center">
         <FilterPill
+          label="DEPT"
+          value={dept}
+          onChange={(v) => { setDept(v); setPage(1); }}
+          options={data?.departments ?? []}
+          emptyLabel="All Depts"
+        />
+        <FilterPill
           label="MENTOR"
           value={mentor}
           onChange={(v) => { setMentor(v); }}
@@ -128,9 +137,9 @@ export default function StudentDetailPage() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="bg-white rounded-full px-4 py-1.5 text-sm text-gray-700 outline-none w-56 border border-white/30"
         />
-        {(mentor || category || company || offerCategory || search) && (
+        {(dept || mentor || category || company || offerCategory || search) && (
           <button
-            onClick={() => { setMentor(""); setCategory(""); setCompany(""); setOfferCategory(""); setSearch(""); }}
+            onClick={() => { setDept(""); setMentor(""); setCategory(""); setCompany(""); setOfferCategory(""); setSearch(""); }}
             className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-full transition-colors"
           >
             Reset

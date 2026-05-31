@@ -4,7 +4,9 @@ import { google } from "googleapis";
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID!;
 const CACHE_TTL = 5 * 60 * 1000;
 
-let cache: { data: MentorStat[]; mentors: string[]; ts: number } | null = null;
+type RawRow = string[];
+
+let cache: { rows: RawRow[]; ts: number } | null = null;
 
 interface MentorStat {
   mentor: string;
@@ -19,7 +21,12 @@ interface MentorStat {
   Marquee: number;
 }
 
-async function fetchAll() {
+function getDept(cls: string): string {
+  const parts = cls.trim().split(/\s+/);
+  return parts.length <= 1 ? cls.trim() : parts.slice(0, -1).join(" ");
+}
+
+async function fetchAll(): Promise<RawRow[]> {
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -30,13 +37,15 @@ async function fetchAll() {
     range: "GDS!A:AD",
   });
   const rows = res.data.values;
-  if (!rows || rows.length < 2) return { mentorStats: [], mentors: [] };
-
+  if (!rows || rows.length < 2) return [];
   const [, ...data] = rows;
+  return data.filter((row) => row[1] || row[17] || row[18]);
+}
 
+function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors: string[] } {
   const map = new Map<string, MentorStat>();
 
-  for (const row of data) {
+  for (const row of rows) {
     const mentor = row[15]?.trim() || "";
     const mentorId = row[14]?.trim() || "";
     if (!mentor) continue;
@@ -67,35 +76,45 @@ async function fetchAll() {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mentorFilter = searchParams.get("mentor") || "";
+  const deptFilter = searchParams.get("dept") || "";
 
   try {
     if (!cache || Date.now() - cache.ts > CACHE_TTL) {
-      const { mentorStats, mentors } = await fetchAll();
-      cache = { data: mentorStats, mentors, ts: Date.now() };
+      const rows = await fetchAll();
+      cache = { rows, ts: Date.now() };
     }
 
-    const all = cache.data;
-    const mentors = cache.mentors;
+    const allRows = cache.rows;
+
+    const departments = [
+      ...new Set(allRows.map((r) => getDept(r[16] || "")).filter(Boolean)),
+    ].sort();
+
+    const filteredRows = deptFilter
+      ? allRows.filter((r) => getDept(r[16] || "") === deptFilter)
+      : allRows;
+
+    const { mentorStats, mentors } = buildMentorStats(filteredRows);
 
     if (mentorFilter) {
-      const found = all.find((m) => m.mentor === mentorFilter);
-      return NextResponse.json({ mentors, stat: found || null });
+      const found = mentorStats.find((m) => m.mentor === mentorFilter);
+      return NextResponse.json({ mentors, departments, stat: found || null });
     }
 
     const agg: MentorStat = {
       mentor: "All",
       mentorId: "",
-      allocated: all.reduce((s, m) => s + m.allocated, 0),
-      placed: all.reduce((s, m) => s + m.placed, 0),
-      higherStudies: all.reduce((s, m) => s + m.higherStudies, 0),
-      totalOffers: all.reduce((s, m) => s + m.totalOffers, 0),
-      Normal: all.reduce((s, m) => s + m.Normal, 0),
-      Dream: all.reduce((s, m) => s + m.Dream, 0),
-      "Super Dream": all.reduce((s, m) => s + m["Super Dream"], 0),
-      Marquee: all.reduce((s, m) => s + m.Marquee, 0),
+      allocated: mentorStats.reduce((s, m) => s + m.allocated, 0),
+      placed: mentorStats.reduce((s, m) => s + m.placed, 0),
+      higherStudies: mentorStats.reduce((s, m) => s + m.higherStudies, 0),
+      totalOffers: mentorStats.reduce((s, m) => s + m.totalOffers, 0),
+      Normal: mentorStats.reduce((s, m) => s + m.Normal, 0),
+      Dream: mentorStats.reduce((s, m) => s + m.Dream, 0),
+      "Super Dream": mentorStats.reduce((s, m) => s + m["Super Dream"], 0),
+      Marquee: mentorStats.reduce((s, m) => s + m.Marquee, 0),
     };
 
-    return NextResponse.json({ mentors, stat: agg });
+    return NextResponse.json({ mentors, departments, stat: agg });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });

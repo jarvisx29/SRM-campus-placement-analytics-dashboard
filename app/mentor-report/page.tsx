@@ -19,6 +19,7 @@ interface MentorStat {
 
 interface ApiResponse {
   mentors: string[];
+  departments: string[];
   stat: MentorStat | null;
 }
 
@@ -38,13 +39,15 @@ const ROW2 = [
 
 export default function MentorReportPage() {
   const [mentor, setMentor] = useState("");
+  const [dept, setDept] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [error, setError] = useState("");
 
-  const fetchData = useCallback(async (m: string) => {
+  const fetchData = useCallback(async (m: string, d: string) => {
     setError("");
     const params = new URLSearchParams();
     if (m) params.set("mentor", m);
+    if (d) params.set("dept", d);
     try {
       const res = await fetch(`/api/mentor-report?${params}`);
       const json = await res.json();
@@ -55,11 +58,12 @@ export default function MentorReportPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(mentor);
-  }, [mentor, fetchData]);
+    fetchData(mentor, dept);
+  }, [mentor, dept, fetchData]);
 
   const stat = data?.stat;
   const mentors = data?.mentors ?? [];
+  const departments = data?.departments ?? [];
 
   const row1Vals: Record<string, number> = {
     higherStudies: stat?.higherStudies ?? 0,
@@ -84,20 +88,24 @@ export default function MentorReportPage() {
         </div>
       )}
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap items-center">
+        <CyanPill label="DEPT" value={dept} onChange={(v) => { setDept(v); setMentor(""); }} options={departments} />
         <CyanPill label="MENTOR" value={mentor} onChange={setMentor} options={mentors} />
         {mentor && (
           <div className="bg-[#00bcd4] text-white text-xs font-semibold uppercase rounded-full px-4 py-1.5 flex items-center gap-2">
             <span>MENTOR ID: {stat?.mentorId || "—"}</span>
           </div>
         )}
-        {mentor && (
+        {(dept || mentor) && (
           <button
-            onClick={() => setMentor("")}
+            onClick={() => { setDept(""); setMentor(""); }}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-3 py-1.5 rounded-full transition-colors"
           >
             Clear
           </button>
+        )}
+        {dept && (
+          <span className="text-sm font-semibold text-[#1565c0]">Showing: {dept}</span>
         )}
       </div>
 

@@ -34,14 +34,17 @@ const BAR_ITEMS = [
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [dept, setDept] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/students")
+    const params = new URLSearchParams();
+    if (dept) params.set("dept", dept);
+    fetch(`/api/students?${params}`)
       .then((r) => r.json())
       .then(setData)
       .catch(() => setError("Failed to load data"));
-  }, []);
+  }, [dept]);
 
   if (error) return <div className="p-8 text-red-600">{error}</div>;
   if (!data) return <div className="p-8 text-gray-400">Loading dashboard…</div>;
@@ -120,9 +123,37 @@ export default function DashboardPage() {
     );
   };
 
+  const departments = data?.departments ?? [];
+
   return (
     <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
       <SrmHeader />
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <select
+          value={dept}
+          onChange={(e) => setDept(e.target.value)}
+          className="appearance-none bg-[#1565c0] text-white text-xs font-bold uppercase tracking-wide rounded-full px-5 py-2 outline-none cursor-pointer border-2 border-[#e91e8c] shadow"
+        >
+          <option value="">ALL DEPARTMENTS ▾</option>
+          {departments.map((d) => (
+            <option key={d} value={d} className="text-gray-800 bg-white">{d}</option>
+          ))}
+        </select>
+        {dept && (
+          <button
+            onClick={() => setDept("")}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-3 py-1.5 rounded-full transition-colors"
+          >
+            Clear
+          </button>
+        )}
+        {dept && (
+          <span className="text-sm font-semibold text-[#1565c0]">
+            Showing: {dept}
+          </span>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {ROW1.map(({ key, label, bg, color }) => (
