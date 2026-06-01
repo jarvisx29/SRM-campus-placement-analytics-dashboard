@@ -69,7 +69,7 @@ async function fetchSheetData(): Promise<Student[]> {
     .filter((row) => row[1] || row[17] || row[18])
     .map((row) => ({
       sno: row[0] || "",
-      category: row[1] || "",
+      category: (row[1] || "").trim().toUpperCase(),
       eligible: row[2] || "",
       enrolled: row[3] || "",
       degree: row[4] || "",

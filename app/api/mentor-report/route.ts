@@ -56,7 +56,7 @@ function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors:
     const s = map.get(mentor)!;
     s.allocated++;
     if (row[19] === "YES") s.placed++;
-    if (row[1] === "HS") s.higherStudies++;
+    if ((row[1] || "").trim().toUpperCase() === "HS") s.higherStudies++;
 
     const offerType = row[21]?.trim();
     const offers = [row[22], row[23], row[24], row[25], row[26], row[27]].filter(Boolean).length;
