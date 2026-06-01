@@ -70,8 +70,11 @@ export default function ReportPage() {
 
   const [filtered, setFiltered] = useState<ReportStudent[]>([]);
   const [applied, setApplied] = useState(false);
+  const [previewPage, setPreviewPage] = useState(1);
   const [generating, setGenerating] = useState<"pdf" | "docx" | null>(null);
   const [error, setError] = useState("");
+
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     fetch("/api/students")
@@ -124,6 +127,7 @@ export default function ReportPage() {
 
     setFiltered(result);
     setApplied(true);
+    setPreviewPage(1);
   }, [allStudents, dept, category, placedStatus, numFilters, sortField, sortDir]);
 
   const buildRows = () =>
@@ -464,52 +468,78 @@ export default function ReportPage() {
 
           {filtered.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">No students match the selected filters.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-100 text-left">
-                    {HEADERS.map((h) => (
-                      <th key={h} className="px-3 py-2.5 font-bold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.slice(0, 15).map((s, i) => (
-                    <tr key={s.registerNo || i} className={i % 2 === 0 ? "bg-white" : "bg-[#f0f4f8]"}>
-                      <td className="px-3 py-2 text-gray-500">{i + 1}</td>
-                      <td className="px-3 py-2 font-mono text-gray-700 whitespace-nowrap">{s.registerNo || "—"}</td>
-                      <td className="px-3 py-2 text-gray-800 whitespace-nowrap font-medium">{s.studentName || "—"}</td>
-                      <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.dept || "—"}</td>
-                      <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.class || "—"}</td>
-                      <td className="px-3 py-2 text-gray-600">{s.category || "—"}</td>
-                      <td className="px-3 py-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          s.placed === "YES" ? "bg-green-100 text-green-800" :
-                          s.placed === "NO" ? "bg-red-100 text-red-700" :
-                          s.placed === "NE" ? "bg-orange-100 text-orange-700" :
-                          "bg-gray-100 text-gray-600"
-                        }`}>
-                          {s.placed || "—"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-600">{s.tenth || "—"}</td>
-                      <td className="px-3 py-2 text-gray-600">{s.twelfth || "—"}</td>
-                      <td className="px-3 py-2 text-gray-600">{s.cgpa || "—"}</td>
-                      <td className="px-3 py-2 font-medium" style={{ color: s.offerType ? "#7b1fa2" : "#9ca3af" }}>{s.offerType || "—"}</td>
-                      <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{s.offer1 || "—"}</td>
-                      <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{s.mentor || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filtered.length > 15 && (
-                <p className="px-4 py-2 text-xs text-gray-400 border-t border-gray-100">
-                  Showing first 15 of {filtered.length} — full list is included in the downloaded file.
-                </p>
-              )}
-            </div>
-          )}
+          ) : (() => {
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            const paginated = filtered.slice((previewPage - 1) * PAGE_SIZE, previewPage * PAGE_SIZE);
+            const globalStart = (previewPage - 1) * PAGE_SIZE;
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-100 text-left">
+                        {HEADERS.map((h) => (
+                          <th key={h} className="px-3 py-2.5 font-bold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginated.map((s, i) => (
+                        <tr key={s.registerNo || i} className={i % 2 === 0 ? "bg-white" : "bg-[#f0f4f8]"}>
+                          <td className="px-3 py-2 text-gray-500">{globalStart + i + 1}</td>
+                          <td className="px-3 py-2 font-mono text-gray-700 whitespace-nowrap">{s.registerNo || "—"}</td>
+                          <td className="px-3 py-2 text-gray-800 whitespace-nowrap font-medium">{s.studentName || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.dept || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.class || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600">{s.category || "—"}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              s.placed === "YES" ? "bg-green-100 text-green-800" :
+                              s.placed === "NO" ? "bg-red-100 text-red-700" :
+                              s.placed === "NE" ? "bg-orange-100 text-orange-700" :
+                              "bg-gray-100 text-gray-600"
+                            }`}>
+                              {s.placed || "—"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-600">{s.tenth || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600">{s.twelfth || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600">{s.cgpa || "—"}</td>
+                          <td className="px-3 py-2 font-medium" style={{ color: s.offerType ? "#7b1fa2" : "#9ca3af" }}>{s.offerType || "—"}</td>
+                          <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{s.offer1 || "—"}</td>
+                          <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{s.mentor || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-xs text-gray-400">
+                      Page {previewPage} of {totalPages} &nbsp;·&nbsp; {filtered.length} students total
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                        disabled={previewPage === 1}
+                        className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setPreviewPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={previewPage === totalPages}
+                        className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

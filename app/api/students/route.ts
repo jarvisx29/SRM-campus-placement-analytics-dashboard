@@ -40,6 +40,14 @@ export interface Student {
   trainingCategory: string;
 }
 
+function fixPercent(val: string): string {
+  if (!val) return "";
+  const trimmed = val.trim();
+  const num = parseFloat(trimmed); // parseFloat ignores trailing "%"
+  if (!isNaN(num) && num > 100) return (num / 100).toFixed(2);
+  return trimmed.replace(/%/g, "").trim() || trimmed;
+}
+
 async function fetchSheetData(): Promise<Student[]> {
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
@@ -67,8 +75,8 @@ async function fetchSheetData(): Promise<Student[]> {
       degree: row[4] || "",
       gender: row[5] || "",
       dob: row[6] || "",
-      tenth: row[7] || "",
-      twelfth: row[8] || "",
+      tenth: fixPercent(row[7] || ""),
+      twelfth: fixPercent(row[8] || ""),
       cgpa: row[9] || "",
       backlogs: row[10] || "",
       officialMail: row[11] || "",
