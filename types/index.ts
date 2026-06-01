@@ -13,6 +13,10 @@ export interface StudentRow {
   offer6: string;
   mentor: string;
   mentorId: string;
+  tenth: string;
+  twelfth: string;
+  cgpa: string;
+  backlogs: string;
 }
 
 export interface Summary {

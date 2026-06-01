@@ -194,6 +194,10 @@ export async function GET(request: Request) {
         offer6: s.offer6,
         mentor: s.mentor,
         mentorId: s.mentorId,
+        tenth: s.tenth,
+        twelfth: s.twelfth,
+        cgpa: s.cgpa,
+        backlogs: s.backlogs,
       })),
     });
   } catch (err) {
