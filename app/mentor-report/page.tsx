@@ -6,7 +6,6 @@ import StatCard from "@/components/StatCard";
 
 interface MentorStat {
   mentor: string;
-  mentorId: string;
   allocated: number;
   placed: number;
   higherStudies: number;
@@ -91,11 +90,6 @@ export default function MentorReportPage() {
       <div className="flex gap-4 flex-wrap items-center">
         <CyanPill label="DEPT" value={dept} onChange={(v) => { setDept(v); setMentor(""); }} options={departments} />
         <CyanPill label="MENTOR" value={mentor} onChange={setMentor} options={mentors} />
-        {mentor && (
-          <div className="bg-[#00bcd4] text-white text-xs font-semibold uppercase rounded-full px-4 py-1.5 flex items-center gap-2">
-            <span>MENTOR ID: {stat?.mentorId || "—"}</span>
-          </div>
-        )}
         {(dept || mentor) && (
           <button
             onClick={() => { setDept(""); setMentor(""); }}

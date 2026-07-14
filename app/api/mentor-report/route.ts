@@ -10,7 +10,6 @@ let cache: { rows: RawRow[]; ts: number } | null = null;
 
 interface MentorStat {
   mentor: string;
-  mentorId: string;
   allocated: number;
   placed: number;
   higherStudies: number;
@@ -34,32 +33,31 @@ async function fetchAll(): Promise<RawRow[]> {
   const sheets = google.sheets({ version: "v4", auth });
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: "GDS!A:AD",
+    range: "GDS!A:AC",
   });
   const rows = res.data.values;
   if (!rows || rows.length < 2) return [];
   const [, ...data] = rows;
-  return data.filter((row) => row[1] || row[17] || row[18]);
+  return data.filter((row) => row[1] || row[16] || row[17]);
 }
 
 function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors: string[] } {
   const map = new Map<string, MentorStat>();
 
   for (const row of rows) {
-    const mentor = row[15]?.trim() || "";
-    const mentorId = row[14]?.trim() || "";
+    const mentor = row[14]?.trim() || "";
     if (!mentor) continue;
 
     if (!map.has(mentor)) {
-      map.set(mentor, { mentor, mentorId, allocated: 0, placed: 0, higherStudies: 0, totalOffers: 0, Normal: 0, Dream: 0, "Super Dream": 0, Marquee: 0 });
+      map.set(mentor, { mentor, allocated: 0, placed: 0, higherStudies: 0, totalOffers: 0, Normal: 0, Dream: 0, "Super Dream": 0, Marquee: 0 });
     }
     const s = map.get(mentor)!;
     s.allocated++;
-    if (row[19] === "YES") s.placed++;
+    if (row[18] === "YES") s.placed++;
     if ((row[1] || "").trim().toUpperCase() === "HS") s.higherStudies++;
 
-    const offerType = row[21]?.trim();
-    const offers = [row[22], row[23], row[24], row[25], row[26], row[27]].filter(Boolean).length;
+    const offerType = row[20]?.trim();
+    const offers = [row[21], row[22], row[23], row[24], row[25], row[26]].filter(Boolean).length;
     s.totalOffers += offers;
 
     if (offerType === "Normal") s.Normal++;
@@ -87,11 +85,11 @@ export async function GET(request: Request) {
     const allRows = cache.rows;
 
     const departments = [
-      ...new Set(allRows.map((r) => getDept(r[16] || "")).filter(Boolean)),
+      ...new Set(allRows.map((r) => getDept(r[15] || "")).filter(Boolean)),
     ].sort();
 
     const filteredRows = deptFilter
-      ? allRows.filter((r) => getDept(r[16] || "") === deptFilter)
+      ? allRows.filter((r) => getDept(r[15] || "") === deptFilter)
       : allRows;
 
     const { mentorStats, mentors } = buildMentorStats(filteredRows);
@@ -103,7 +101,6 @@ export async function GET(request: Request) {
 
     const agg: MentorStat = {
       mentor: "All",
-      mentorId: "",
       allocated: mentorStats.reduce((s, m) => s + m.allocated, 0),
       placed: mentorStats.reduce((s, m) => s + m.placed, 0),
       higherStudies: mentorStats.reduce((s, m) => s + m.higherStudies, 0),

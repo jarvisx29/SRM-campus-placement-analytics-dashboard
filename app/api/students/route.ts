@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID!;
-const SHEET_RANGE = "GDS!A:AD";
+const SHEET_RANGE = "GDS!A:AC";
 
 let cache: { data: Student[]; ts: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
@@ -22,7 +22,6 @@ export interface Student {
   officialMail: string;
   personalMail: string;
   phone: string;
-  mentorId: string;
   mentor: string;
   class: string;
   registerNo: string;
@@ -66,7 +65,7 @@ async function fetchSheetData(): Promise<Student[]> {
   const [, ...dataRows] = rows;
 
   return dataRows
-    .filter((row) => row[1] || row[17] || row[18])
+    .filter((row) => row[1] || row[16] || row[17])
     .map((row) => ({
       sno: row[0] || "",
       category: (row[1] || "").trim().toUpperCase(),
@@ -77,27 +76,26 @@ async function fetchSheetData(): Promise<Student[]> {
       dob: row[6] || "",
       tenth: fixPercent(row[7] || ""),
       twelfth: fixPercent(row[8] || ""),
-      cgpa: row[9] || "",
+      cgpa: fixPercent(row[9] || ""),
       backlogs: row[10] || "",
       officialMail: row[11] || "",
       personalMail: row[12] || "",
       phone: row[13] || "",
-      mentorId: row[14] || "",
-      mentor: row[15] || "",
-      class: row[16] || "",
-      registerNo: row[17] || "",
-      studentName: row[18] || "",
-      placed: row[19] || "",
-      offers: row[20] || "",
-      offerType: row[21] || "",
-      offer1: row[22] || "",
-      offer2: row[23] || "",
-      offer3: row[24] || "",
-      offer4: row[25] || "",
-      offer5: row[26] || "",
-      offer6: row[27] || "",
-      resumeLink: row[28] || "",
-      trainingCategory: row[29] || "",
+      mentor: row[14] || "",
+      class: row[15] || "",
+      registerNo: row[16] || "",
+      studentName: row[17] || "",
+      placed: row[18] || "",
+      offers: row[19] || "",
+      offerType: row[20] || "",
+      offer1: row[21] || "",
+      offer2: row[22] || "",
+      offer3: row[23] || "",
+      offer4: row[24] || "",
+      offer5: row[25] || "",
+      offer6: row[26] || "",
+      resumeLink: row[27] || "",
+      trainingCategory: row[28] || "",
     }));
 }
 
@@ -201,7 +199,6 @@ export async function GET(request: Request) {
         offer5: s.offer5,
         offer6: s.offer6,
         mentor: s.mentor,
-        mentorId: s.mentorId,
         tenth: s.tenth,
         twelfth: s.twelfth,
         cgpa: s.cgpa,
