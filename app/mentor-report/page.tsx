@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import SrmHeader from "@/components/SrmHeader";
 import StatCard from "@/components/StatCard";
+import DataTable from "@/components/DataTable";
+import { StudentRow } from "@/types";
 
 interface MentorStat {
   mentor: string;
@@ -40,6 +42,7 @@ export default function MentorReportPage() {
   const [mentor, setMentor] = useState("");
   const [dept, setDept] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [students, setStudents] = useState<StudentRow[]>([]);
   const [error, setError] = useState("");
 
   const fetchData = useCallback(async (m: string, d: string) => {
@@ -51,6 +54,14 @@ export default function MentorReportPage() {
       const res = await fetch(`/api/mentor-report?${params}`);
       const json = await res.json();
       setData(json);
+
+      if (m) {
+        const studentsRes = await fetch(`/api/students?${params}`);
+        const studentsJson = await studentsRes.json();
+        setStudents(studentsJson.students ?? []);
+      } else {
+        setStudents([]);
+      }
     } catch {
       setError("Failed to load data");
     }
@@ -124,6 +135,8 @@ export default function MentorReportPage() {
               Mentor data is not yet populated in the sheet. Once the MENTOR column in GDS is filled, reports will appear here.
             </div>
           )}
+
+          {mentor && <DataTable students={students} />}
         </>
       )}
     </div>
