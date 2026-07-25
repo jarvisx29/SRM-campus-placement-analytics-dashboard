@@ -134,32 +134,32 @@ export default function MentorReportPage() {
       const rows = view === "GENERAL" ? buildGeneralRows() : buildHavlocRows();
       const count = view === "GENERAL" ? students.length : havlocRows.length;
 
-      doc.setFontSize(13);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("SRM Institute of Science and Technology — Ramapuram", 148, 14, { align: "center" });
-      doc.setFontSize(10);
-      doc.text(`Mentor Report — ${view === "GENERAL" ? "General" : "Havloc"} Data`, 148, 20, { align: "center" });
-      doc.setFontSize(8);
+      doc.text("SRM Institute of Science and Technology — Ramapuram", 148, 12, { align: "center" });
+      doc.setFontSize(9);
+      doc.text(`Mentor Report — ${view === "GENERAL" ? "General" : "Havloc"} Data`, 148, 17.5, { align: "center" });
+      doc.setFontSize(7.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`Mentor: ${mentor || "All"}${dept ? `  |  Dept: ${dept}` : ""}`, 148, 26, { align: "center" });
-      doc.text(`Generated: ${date}   Total: ${count} students`, 148, 31, { align: "center" });
+      doc.text(`Mentor: ${mentor || "All"}${dept ? `  |  Dept: ${dept}` : ""}`, 148, 22.5, { align: "center" });
+      doc.text(`Generated: ${date}   Total: ${count} students`, 148, 27, { align: "center" });
 
       autoTable(doc, {
-        startY: 35,
+        startY: 30,
         head: [headers],
         body: rows,
-        styles: { fontSize: 6.5, cellPadding: 1.2, overflow: "linebreak" },
-        headStyles: { fillColor: [21, 101, 192], textColor: 255, fontStyle: "bold", fontSize: 6.5 },
+        styles: { fontSize: 6, cellPadding: 0.8, overflow: "linebreak" },
+        headStyles: { fillColor: [21, 101, 192], textColor: 255, fontStyle: "bold", fontSize: 6 },
         alternateRowStyles: { fillColor: [240, 244, 248] },
       });
 
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const lastAutoTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable;
-      let sigY = (lastAutoTable?.finalY ?? 35) + 25;
-      if (sigY > pageHeight - 20) {
+      let sigY = (lastAutoTable?.finalY ?? 30) + 12;
+      if (sigY > pageHeight - 15) {
         doc.addPage();
-        sigY = 30;
+        sigY = 25;
       }
 
       const margin = 20;
@@ -194,13 +194,15 @@ export default function MentorReportPage() {
 
       const hCell = (text: string) =>
         new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 14, color: "FFFFFF" })] })],
+          children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 12, color: "FFFFFF" })] })],
           shading: { fill: "1565C0" },
+          margins: { top: 40, bottom: 40, left: 60, right: 60 },
         });
       const dCell = (text: string, alt: boolean) =>
         new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text, size: 14 })] })],
+          children: [new Paragraph({ children: [new TextRun({ text, size: 12 })] })],
           shading: alt ? { fill: "EEF2F7" } : undefined,
+          margins: { top: 30, bottom: 30, left: 60, right: 60 },
         });
 
       const headers = view === "GENERAL" ? GENERAL_HEADERS : HAVLOC_HEADERS;
@@ -226,7 +228,7 @@ export default function MentorReportPage() {
             bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
           },
           children: [
-            new Paragraph({ text: "", spacing: { before: 400 } }),
+            new Paragraph({ text: "", spacing: { before: 200 } }),
           ],
         });
       const sigLabelCell = (label: string) =>
@@ -270,7 +272,6 @@ export default function MentorReportPage() {
                 ...rows.map((row, i) => new TableRow({ children: row.map((cell) => dCell(cell, i % 2 !== 0)) })),
               ],
             }),
-            new Paragraph({ text: "" }),
             new Paragraph({ text: "" }),
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
