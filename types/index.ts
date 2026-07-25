@@ -16,6 +16,9 @@ export interface StudentRow {
   twelfth: string;
   cgpa: string;
   backlogs: string;
+  gender: string;
+  dob: string;
+  resumeLink: string;
 }
 
 export interface HavlocRow {

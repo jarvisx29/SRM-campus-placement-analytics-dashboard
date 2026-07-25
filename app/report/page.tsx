@@ -71,7 +71,7 @@ export default function ReportPage() {
   const [filtered, setFiltered] = useState<ReportStudent[]>([]);
   const [applied, setApplied] = useState(false);
   const [previewPage, setPreviewPage] = useState(1);
-  const [generating, setGenerating] = useState<"pdf" | "docx" | null>(null);
+  const [generating, setGenerating] = useState<"pdf" | "docx" | "xlsx" | null>(null);
   const [error, setError] = useState("");
 
   const PAGE_SIZE = 20;
@@ -137,6 +137,8 @@ export default function ReportPage() {
       s.studentName || "—",
       s.dept || "—",
       s.class || "—",
+      s.gender || "—",
+      s.dob || "—",
       s.category || "—",
       s.placed || "—",
       s.tenth || "—",
@@ -145,9 +147,10 @@ export default function ReportPage() {
       s.offerType || "—",
       s.offer1 || "—",
       s.mentor || "—",
+      s.resumeLink || "—",
     ]);
 
-  const HEADERS = ["#", "Reg No", "Name", "Dept", "Class", "Category", "Status", "10th%", "12th%", "CGPA", "Offer Type", "Company", "Mentor"];
+  const HEADERS = ["#", "Reg No", "Name", "Dept", "Class", "Gender", "DOB", "Category", "Status", "10th%", "12th%", "CGPA", "Offer Type", "Company", "Mentor", "Resume Link"];
 
   const downloadPDF = async () => {
     setGenerating("pdf");
@@ -183,19 +186,22 @@ export default function ReportPage() {
         headStyles: { fillColor: [21, 101, 192], textColor: 255, fontStyle: "bold", fontSize: 7 },
         alternateRowStyles: { fillColor: [240, 244, 248] },
         columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 22 },
-          2: { cellWidth: 32 },
-          3: { cellWidth: 15 },
-          4: { cellWidth: 18 },
-          5: { cellWidth: 18 },
-          6: { cellWidth: 15 },
-          7: { cellWidth: 12 },
-          8: { cellWidth: 12 },
-          9: { cellWidth: 12 },
-          10: { cellWidth: 20 },
-          11: { cellWidth: 25 },
-          12: { cellWidth: "auto" },
+          0: { cellWidth: 7 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 26 },
+          3: { cellWidth: 13 },
+          4: { cellWidth: 15 },
+          5: { cellWidth: 11 },
+          6: { cellWidth: 16 },
+          7: { cellWidth: 15 },
+          8: { cellWidth: 13 },
+          9: { cellWidth: 10 },
+          10: { cellWidth: 10 },
+          11: { cellWidth: 10 },
+          12: { cellWidth: 16 },
+          13: { cellWidth: 20 },
+          14: { cellWidth: 20 },
+          15: { cellWidth: "auto" },
         },
       });
 
@@ -277,6 +283,31 @@ export default function ReportPage() {
       const a = document.createElement("a");
       a.href = url;
       a.download = `SRM_Report_${date.replace(/\//g, "-")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const downloadXLSX = async () => {
+    setGenerating("xlsx");
+    try {
+      const XLSX = await import("xlsx");
+      const date = new Date().toLocaleDateString("en-IN");
+
+      const sheet = XLSX.utils.aoa_to_sheet([HEADERS, ...buildRows()]);
+      sheet["!cols"] = HEADERS.map(() => ({ wch: 16 }));
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, "Report");
+
+      const out = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SRM_Report_${date.replace(/\//g, "-")}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -463,6 +494,13 @@ export default function ReportPage() {
               >
                 {generating === "docx" ? "Generating…" : "Download DOCX"}
               </button>
+              <button
+                onClick={downloadXLSX}
+                disabled={filtered.length === 0 || !!generating}
+                className="flex items-center gap-2 bg-[#2e7d32] hover:bg-[#1b5e20] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg uppercase tracking-wide transition-colors"
+              >
+                {generating === "xlsx" ? "Generating…" : "Download XLSX"}
+              </button>
             </div>
           </div>
 
@@ -491,6 +529,8 @@ export default function ReportPage() {
                           <td className="px-3 py-2 text-gray-800 whitespace-nowrap font-medium">{s.studentName || "—"}</td>
                           <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.dept || "—"}</td>
                           <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.class || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.gender || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{s.dob || "—"}</td>
                           <td className="px-3 py-2 text-gray-600">{s.category || "—"}</td>
                           <td className="px-3 py-2">
                             <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -508,6 +548,9 @@ export default function ReportPage() {
                           <td className="px-3 py-2 font-medium" style={{ color: s.offerType ? "#7b1fa2" : "#9ca3af" }}>{s.offerType || "—"}</td>
                           <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{s.offer1 || "—"}</td>
                           <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{s.mentor || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 text-xs max-w-[160px] truncate" title={s.resumeLink}>
+                            {s.resumeLink || "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

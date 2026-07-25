@@ -203,6 +203,9 @@ export async function GET(request: Request) {
         twelfth: s.twelfth,
         cgpa: s.cgpa,
         backlogs: s.backlogs,
+        gender: s.gender,
+        dob: s.dob,
+        resumeLink: s.resumeLink,
       })),
     });
   } catch (err) {
