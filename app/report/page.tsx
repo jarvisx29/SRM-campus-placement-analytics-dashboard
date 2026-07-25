@@ -513,7 +513,7 @@ export default function ReportPage() {
             return (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="min-w-full text-xs">
                     <thead>
                       <tr className="bg-gray-100 text-left">
                         {HEADERS.map((h) => (
@@ -548,8 +548,26 @@ export default function ReportPage() {
                           <td className="px-3 py-2 font-medium" style={{ color: s.offerType ? "#7b1fa2" : "#9ca3af" }}>{s.offerType || "—"}</td>
                           <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{s.offer1 || "—"}</td>
                           <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{s.mentor || "—"}</td>
-                          <td className="px-3 py-2 text-gray-600 text-xs max-w-[160px] truncate" title={s.resumeLink}>
-                            {s.resumeLink || "—"}
+                          <td className="px-3 py-2 text-xs max-w-[160px]">
+                            {s.resumeLink ? (
+                              /^https?:\/\//i.test(s.resumeLink) ? (
+                                <a
+                                  href={s.resumeLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title={s.resumeLink}
+                                  className="block truncate text-[#1565c0] underline hover:text-[#0d47a1]"
+                                >
+                                  {s.resumeLink}
+                                </a>
+                              ) : (
+                                <span className="block truncate text-gray-600" title={s.resumeLink}>
+                                  {s.resumeLink}
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}
