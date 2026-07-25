@@ -153,6 +153,31 @@ export default function MentorReportPage() {
         alternateRowStyles: { fillColor: [240, 244, 248] },
       });
 
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const lastAutoTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable;
+      let sigY = (lastAutoTable?.finalY ?? 35) + 25;
+      if (sigY > pageHeight - 20) {
+        doc.addPage();
+        sigY = 30;
+      }
+
+      const margin = 20;
+      const usableWidth = pageWidth - margin * 2;
+      const colWidth = usableWidth / 3;
+      const sigLabels = ["Mentor", "Placement Coordinator", "HOD"];
+
+      doc.setDrawColor(80);
+      doc.setLineWidth(0.3);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      sigLabels.forEach((label, i) => {
+        const x1 = margin + i * colWidth + 8;
+        const x2 = margin + (i + 1) * colWidth - 8;
+        doc.line(x1, sigY, x2, sigY);
+        doc.text(label, margin + i * colWidth + colWidth / 2, sigY + 6, { align: "center" });
+      });
+
       doc.save(`Mentor_Report_${view}_${date.replace(/\//g, "-")}.pdf`);
     } finally {
       setGenerating(null);
@@ -164,7 +189,7 @@ export default function MentorReportPage() {
     try {
       const {
         Document, Packer, Paragraph, Table, TableRow, TableCell,
-        TextRun, WidthType, AlignmentType, HeadingLevel,
+        TextRun, WidthType, AlignmentType, HeadingLevel, BorderStyle,
       } = await import("docx");
 
       const hCell = (text: string) =>
@@ -182,6 +207,34 @@ export default function MentorReportPage() {
       const rows = view === "GENERAL" ? buildGeneralRows() : buildHavlocRows();
       const count = view === "GENERAL" ? students.length : havlocRows.length;
       const date = new Date().toLocaleDateString("en-IN");
+
+      const sigCell = () =>
+        new TableCell({
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+          },
+          children: [
+            new Paragraph({ text: "", spacing: { before: 400 } }),
+          ],
+        });
+      const sigLabelCell = (label: string) =>
+        new TableCell({
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
+          children: [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: label, bold: true, size: 18 })],
+            }),
+          ],
+        });
 
       const doc = new Document({
         sections: [{
@@ -212,6 +265,15 @@ export default function MentorReportPage() {
                 ...rows.map((row, i) => new TableRow({ children: row.map((cell) => dCell(cell, i % 2 !== 0)) })),
               ],
             }),
+            new Paragraph({ text: "" }),
+            new Paragraph({ text: "" }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: ["Mentor", "Placement Coordinator", "HOD"].map(sigCell) }),
+                new TableRow({ children: ["Mentor", "Placement Coordinator", "HOD"].map(sigLabelCell) }),
+              ],
+            }),
           ],
         }],
       });
@@ -228,26 +290,29 @@ export default function MentorReportPage() {
     }
   };
 
-  const viewActions = (
+  const toggleActions = (
+    <div className="flex rounded-lg overflow-hidden border border-gray-200">
+      <button
+        onClick={() => setView("GENERAL")}
+        className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+          view === "GENERAL" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+        }`}
+      >
+        General
+      </button>
+      <button
+        onClick={() => setView("HAVLOC")}
+        className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+          view === "HAVLOC" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+        }`}
+      >
+        Havloc
+      </button>
+    </div>
+  );
+
+  const downloadActions = (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex rounded-lg overflow-hidden border border-gray-200">
-        <button
-          onClick={() => setView("GENERAL")}
-          className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
-            view === "GENERAL" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          General
-        </button>
-        <button
-          onClick={() => setView("HAVLOC")}
-          className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
-            view === "HAVLOC" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          Havloc
-        </button>
-      </div>
       <button
         onClick={downloadPDF}
         disabled={!!generating}
@@ -313,8 +378,12 @@ export default function MentorReportPage() {
             </div>
           )}
 
-          {mentor && view === "GENERAL" && <DataTable students={students} actions={viewActions} />}
-          {mentor && view === "HAVLOC" && <HavlocTable rows={havlocRows} actions={viewActions} />}
+          {mentor && view === "GENERAL" && (
+            <DataTable students={students} actions={toggleActions} downloadActions={downloadActions} />
+          )}
+          {mentor && view === "HAVLOC" && (
+            <HavlocTable rows={havlocRows} actions={toggleActions} downloadActions={downloadActions} />
+          )}
         </>
       )}
     </div>

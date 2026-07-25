@@ -6,11 +6,12 @@ import { HavlocRow } from "@/types";
 interface Props {
   rows: HavlocRow[];
   actions?: React.ReactNode;
+  downloadActions?: React.ReactNode;
 }
 
 const PAGE_SIZE = 25;
 
-export default function HavlocTable({ rows, actions }: Props) {
+export default function HavlocTable({ rows, actions, downloadActions }: Props) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
@@ -40,13 +41,16 @@ export default function HavlocTable({ rows, actions }: Props) {
           </h2>
           {actions}
         </div>
-        <input
-          type="text"
-          placeholder="Search by name or roll no..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-64"
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          {downloadActions}
+          <input
+            type="text"
+            placeholder="Search by name or roll no..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-64"
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto">
