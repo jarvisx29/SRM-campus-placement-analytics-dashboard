@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import SrmHeader from "@/components/SrmHeader";
 import StatCard from "@/components/StatCard";
 import DataTable from "@/components/DataTable";
-import { StudentRow } from "@/types";
+import HavlocTable from "@/components/HavlocTable";
+import { StudentRow, HavlocRow } from "@/types";
 
 interface MentorStat {
   mentor: string;
@@ -38,12 +39,22 @@ const ROW2 = [
   { key: "Marquee",      label: "Marquee",      bg: "#c5cae9", color: "#283593" },
 ] as const;
 
+const HAVLOC_HEADERS = [
+  "#", "Roll Number", "Name", "Branch", "Applied", "Eligible Jobs", "Eligible Not Applied",
+  "Absent", "Screening", "Others", "Technical Interview", "Group Discussion",
+  "Tech + HR Interview", "Test", "Application Screening", "Pre Placement Talk",
+  "Manager Interview", "HR Interview", "Manager Interview 2", "HR Interview 2",
+];
+
 export default function MentorReportPage() {
   const [mentor, setMentor] = useState("");
   const [dept, setDept] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [havlocRows, setHavlocRows] = useState<HavlocRow[]>([]);
+  const [view, setView] = useState<"GENERAL" | "HAVLOC">("GENERAL");
   const [error, setError] = useState("");
+  const [generating, setGenerating] = useState<"pdf" | "docx" | null>(null);
 
   const fetchData = useCallback(async (m: string, d: string) => {
     setError("");
@@ -56,11 +67,17 @@ export default function MentorReportPage() {
       setData(json);
 
       if (m) {
-        const studentsRes = await fetch(`/api/students?${params}`);
+        const [studentsRes, havlocRes] = await Promise.all([
+          fetch(`/api/students?${params}`),
+          fetch(`/api/havloc-report?${params}`),
+        ]);
         const studentsJson = await studentsRes.json();
+        const havlocJson = await havlocRes.json();
         setStudents(studentsJson.students ?? []);
+        setHavlocRows(havlocJson.rows ?? []);
       } else {
         setStudents([]);
+        setHavlocRows([]);
       }
     } catch {
       setError("Failed to load data");
@@ -87,6 +104,166 @@ export default function MentorReportPage() {
     "Super Dream": stat?.["Super Dream"] ?? 0,
     Marquee:       stat?.Marquee ?? 0,
   };
+
+  const buildGeneralRows = () =>
+    students.map((s, i) => [
+      String(i + 1), s.registerNo || "—", s.studentName || "—", s.class || "—",
+      s.category || "—", s.placed || "—", s.offerType || "—",
+      s.offer1 || "—", s.offer2 || "—", s.offer3 || "—", s.mentor || "—",
+    ]);
+  const GENERAL_HEADERS = ["#", "Register No", "Student Name", "Class", "Category", "Status", "Offer Type", "Offer 1", "Offer 2", "Offer 3", "Mentor"];
+
+  const buildHavlocRows = () =>
+    havlocRows.map((r, i) => [
+      String(i + 1), r.rollNumber || "—", r.name || "—", r.branch || "—",
+      r.appliedCount || "—", r.eligibleJobCount || "—", r.eligibleNotAppliedCount || "—",
+      r.absentCount || "—", r.screening || "—", r.others || "—", r.technicalInterview || "—",
+      r.groupDiscussion || "—", r.technicalHrInterview || "—", r.test || "—",
+      r.applicationScreening || "—", r.prePlacementTalk || "—", r.managerInterview1 || "—",
+      r.hrInterview1 || "—", r.managerInterview2 || "—", r.hrInterview2 || "—",
+    ]);
+
+  const downloadPDF = async () => {
+    setGenerating("pdf");
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { autoTable } = await import("jspdf-autotable");
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const date = new Date().toLocaleDateString("en-IN");
+      const headers = view === "GENERAL" ? GENERAL_HEADERS : HAVLOC_HEADERS;
+      const rows = view === "GENERAL" ? buildGeneralRows() : buildHavlocRows();
+      const count = view === "GENERAL" ? students.length : havlocRows.length;
+
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("SRM Institute of Science and Technology — Ramapuram", 148, 14, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(`Mentor Report — ${view === "GENERAL" ? "General" : "Havloc"} Data`, 148, 20, { align: "center" });
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Mentor: ${mentor || "All"}${dept ? `  |  Dept: ${dept}` : ""}`, 148, 26, { align: "center" });
+      doc.text(`Generated: ${date}   Total: ${count} students`, 148, 31, { align: "center" });
+
+      autoTable(doc, {
+        startY: 35,
+        head: [headers],
+        body: rows,
+        styles: { fontSize: 6.5, cellPadding: 1.2, overflow: "linebreak" },
+        headStyles: { fillColor: [21, 101, 192], textColor: 255, fontStyle: "bold", fontSize: 6.5 },
+        alternateRowStyles: { fillColor: [240, 244, 248] },
+      });
+
+      doc.save(`Mentor_Report_${view}_${date.replace(/\//g, "-")}.pdf`);
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const downloadDOCX = async () => {
+    setGenerating("docx");
+    try {
+      const {
+        Document, Packer, Paragraph, Table, TableRow, TableCell,
+        TextRun, WidthType, AlignmentType, HeadingLevel,
+      } = await import("docx");
+
+      const hCell = (text: string) =>
+        new TableCell({
+          children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: 14, color: "FFFFFF" })] })],
+          shading: { fill: "1565C0" },
+        });
+      const dCell = (text: string, alt: boolean) =>
+        new TableCell({
+          children: [new Paragraph({ children: [new TextRun({ text, size: 14 })] })],
+          shading: alt ? { fill: "EEF2F7" } : undefined,
+        });
+
+      const headers = view === "GENERAL" ? GENERAL_HEADERS : HAVLOC_HEADERS;
+      const rows = view === "GENERAL" ? buildGeneralRows() : buildHavlocRows();
+      const count = view === "GENERAL" ? students.length : havlocRows.length;
+      const date = new Date().toLocaleDateString("en-IN");
+
+      const doc = new Document({
+        sections: [{
+          properties: { page: { size: { width: 15840, height: 12240, orientation: "landscape" as const } } },
+          children: [
+            new Paragraph({
+              text: "SRM Institute of Science and Technology — Ramapuram",
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: `Mentor Report — ${view === "GENERAL" ? "General" : "Havloc"} Data`, bold: true })],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: `Mentor: ${mentor || "All"}${dept ? `  |  Dept: ${dept}` : ""}`, size: 18 })],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: `Generated: ${date}   |   Total: ${count} students`, size: 18 })],
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({ text: "" }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: headers.map(hCell), tableHeader: true }),
+                ...rows.map((row, i) => new TableRow({ children: row.map((cell) => dCell(cell, i % 2 !== 0)) })),
+              ],
+            }),
+          ],
+        }],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Mentor_Report_${view}_${date.replace(/\//g, "-")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const viewActions = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex rounded-lg overflow-hidden border border-gray-200">
+        <button
+          onClick={() => setView("GENERAL")}
+          className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+            view === "GENERAL" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          General
+        </button>
+        <button
+          onClick={() => setView("HAVLOC")}
+          className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+            view === "HAVLOC" ? "bg-[#1565c0] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          Havloc
+        </button>
+      </div>
+      <button
+        onClick={downloadPDF}
+        disabled={!!generating}
+        className="bg-[#c62828] hover:bg-[#b71c1c] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
+      >
+        {generating === "pdf" ? "Generating…" : "PDF"}
+      </button>
+      <button
+        onClick={downloadDOCX}
+        disabled={!!generating}
+        className="bg-[#1565c0] hover:bg-[#1255a5] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
+      >
+        {generating === "docx" ? "Generating…" : "DOCX"}
+      </button>
+    </div>
+  );
 
   return (
     <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
@@ -136,7 +313,8 @@ export default function MentorReportPage() {
             </div>
           )}
 
-          {mentor && <DataTable students={students} />}
+          {mentor && view === "GENERAL" && <DataTable students={students} actions={viewActions} />}
+          {mentor && view === "HAVLOC" && <HavlocTable rows={havlocRows} actions={viewActions} />}
         </>
       )}
     </div>

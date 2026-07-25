@@ -5,6 +5,7 @@ import { StudentRow } from "@/types";
 
 interface Props {
   students: StudentRow[];
+  actions?: React.ReactNode;
 }
 
 const PLACED_BADGE: Record<string, { label: string; className: string }> = {
@@ -22,7 +23,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const PAGE_SIZE = 25;
 
-export default function DataTable({ students }: Props) {
+export default function DataTable({ students, actions }: Props) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
@@ -43,12 +44,15 @@ export default function DataTable({ students }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="p-4 border-b border-gray-100 flex flex-wrap gap-3 items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-          Student Records
-          <span className="ml-2 text-xs font-normal text-gray-400">
-            ({filtered.length} students)
-          </span>
-        </h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Student Records
+            <span className="ml-2 text-xs font-normal text-gray-400">
+              ({filtered.length} students)
+            </span>
+          </h2>
+          {actions}
+        </div>
         <input
           type="text"
           placeholder="Search by name or register no..."
