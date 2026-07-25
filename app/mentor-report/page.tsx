@@ -172,8 +172,8 @@ export default function MentorReportPage() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       sigLabels.forEach((label, i) => {
-        const x1 = margin + i * colWidth + 8;
-        const x2 = margin + (i + 1) * colWidth - 8;
+        const x1 = margin + i * colWidth + 20;
+        const x2 = margin + (i + 1) * colWidth - 20;
         doc.line(x1, sigY, x2, sigY);
         doc.text(label, margin + i * colWidth + colWidth / 2, sigY + 6, { align: "center" });
       });
@@ -208,12 +208,21 @@ export default function MentorReportPage() {
       const count = view === "GENERAL" ? students.length : havlocRows.length;
       const date = new Date().toLocaleDateString("en-IN");
 
+      const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+
+      const spacerCell = (size: number) =>
+        new TableCell({
+          width: { size, type: WidthType.PERCENTAGE },
+          borders: { top: NO_BORDER, left: NO_BORDER, right: NO_BORDER, bottom: NO_BORDER },
+          children: [new Paragraph({ text: "" })],
+        });
       const sigCell = () =>
         new TableCell({
+          width: { size: 25, type: WidthType.PERCENTAGE },
           borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            top: NO_BORDER,
+            left: NO_BORDER,
+            right: NO_BORDER,
             bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
           },
           children: [
@@ -222,12 +231,8 @@ export default function MentorReportPage() {
         });
       const sigLabelCell = (label: string) =>
         new TableCell({
-          borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          },
+          width: { size: 25, type: WidthType.PERCENTAGE },
+          borders: { top: NO_BORDER, left: NO_BORDER, right: NO_BORDER, bottom: NO_BORDER },
           children: [
             new Paragraph({
               alignment: AlignmentType.CENTER,
@@ -270,8 +275,20 @@ export default function MentorReportPage() {
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
-                new TableRow({ children: ["Mentor", "Placement Coordinator", "HOD"].map(sigCell) }),
-                new TableRow({ children: ["Mentor", "Placement Coordinator", "HOD"].map(sigLabelCell) }),
+                new TableRow({
+                  children: [
+                    spacerCell(4), sigCell(), spacerCell(4),
+                    spacerCell(4), sigCell(), spacerCell(4),
+                    spacerCell(4), sigCell(), spacerCell(5),
+                  ],
+                }),
+                new TableRow({
+                  children: [
+                    spacerCell(4), sigLabelCell("Mentor"), spacerCell(4),
+                    spacerCell(4), sigLabelCell("Placement Coordinator"), spacerCell(4),
+                    spacerCell(4), sigLabelCell("HOD"), spacerCell(5),
+                  ],
+                }),
               ],
             }),
           ],
@@ -318,14 +335,14 @@ export default function MentorReportPage() {
         disabled={!!generating}
         className="bg-[#c62828] hover:bg-[#b71c1c] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
       >
-        {generating === "pdf" ? "Generating…" : "PDF"}
+        {generating === "pdf" ? "Generating…" : "Download PDF"}
       </button>
       <button
         onClick={downloadDOCX}
         disabled={!!generating}
         className="bg-[#1565c0] hover:bg-[#1255a5] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
       >
-        {generating === "docx" ? "Generating…" : "DOCX"}
+        {generating === "docx" ? "Generating…" : "Download DOCX"}
       </button>
     </div>
   );
