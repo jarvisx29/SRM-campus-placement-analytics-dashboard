@@ -178,6 +178,9 @@ export default function ReportPage() {
       doc.text(`Filters: ${filterDesc}`, 148, 26, { align: "center" });
       doc.text(`Generated: ${date}   Total: ${filtered.length} students`, 148, 31, { align: "center" });
 
+      const RESUME_COL = HEADERS.length - 1;
+      const isUrl = (v: string) => /^https?:\/\//i.test(v);
+
       autoTable(doc, {
         startY: 35,
         head: [HEADERS],
@@ -203,6 +206,19 @@ export default function ReportPage() {
           14: { cellWidth: 20 },
           15: { cellWidth: "auto" },
         },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === RESUME_COL && isUrl(String(data.cell.raw ?? ""))) {
+            data.cell.styles.textColor = [21, 101, 192];
+          }
+        },
+        didDrawCell: (data) => {
+          if (data.section === "body" && data.column.index === RESUME_COL) {
+            const raw = String(data.cell.raw ?? "");
+            if (isUrl(raw)) {
+              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: raw });
+            }
+          }
+        },
       });
 
       doc.save(`SRM_Report_${date.replace(/\//g, "-")}.pdf`);
@@ -216,8 +232,11 @@ export default function ReportPage() {
     try {
       const {
         Document, Packer, Paragraph, Table, TableRow, TableCell,
-        TextRun, WidthType, AlignmentType, HeadingLevel,
+        TextRun, WidthType, AlignmentType, HeadingLevel, ExternalHyperlink,
       } = await import("docx");
+
+      const isUrl = (v: string) => /^https?:\/\//i.test(v);
+      const RESUME_COL = HEADERS.length - 1;
 
       const hCell = (text: string) =>
         new TableCell({
@@ -228,6 +247,18 @@ export default function ReportPage() {
       const dCell = (text: string, alt: boolean) =>
         new TableCell({
           children: [new Paragraph({ children: [new TextRun({ text, size: 14 })] })],
+          shading: alt ? { fill: "EEF2F7" } : undefined,
+        });
+
+      const linkCell = (text: string, alt: boolean) =>
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: isUrl(text)
+                ? [new ExternalHyperlink({ link: text, children: [new TextRun({ text, style: "Hyperlink", size: 14 })] })]
+                : [new TextRun({ text, size: 14 })],
+            }),
+          ],
           shading: alt ? { fill: "EEF2F7" } : undefined,
         });
 
@@ -270,7 +301,11 @@ export default function ReportPage() {
                   tableHeader: true,
                 }),
                 ...rows.map((row, i) =>
-                  new TableRow({ children: row.map((cell) => dCell(cell, i % 2 !== 0)) })
+                  new TableRow({
+                    children: row.map((cell, colIdx) =>
+                      colIdx === RESUME_COL ? linkCell(cell, i % 2 !== 0) : dCell(cell, i % 2 !== 0)
+                    ),
+                  })
                 ),
               ],
             }),
