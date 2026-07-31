@@ -416,8 +416,8 @@ export default function ReportPage() {
         <SrmHeader />
         <div className="flex-1 flex items-center justify-center py-16">
           <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-4">
-            <h2 className="text-sm font-bold text-[#1a237e] uppercase tracking-widest text-center">
-              Report Access
+            <h2 className="text-sm font-black text-[#1a237e] uppercase tracking-widest text-center">
+              Admin Access
             </h2>
             <p className="text-xs text-gray-500 text-center">
               Enter the password to view and generate placement reports.
