@@ -57,6 +57,12 @@ function matchNumeric(val: string, op: string, threshold: string): boolean {
 let nextId = 2;
 
 export default function ReportPage() {
+  const [password, setPassword] = useState("");
+  const [authed, setAuthed] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [logging, setLogging] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   const [allStudents, setAllStudents] = useState<ReportStudent[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -76,7 +82,50 @@ export default function ReportPage() {
 
   const PAGE_SIZE = 20;
 
+  const verifyToken = useCallback(async (token: string, silent = false) => {
+    try {
+      const res = await fetch("/api/report-auth", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        sessionStorage.setItem("report_token", token);
+        setAuthed(true);
+      } else {
+        sessionStorage.removeItem("report_token");
+        setAuthed(false);
+        if (!silent) setAuthError("Incorrect password. Please try again.");
+      }
+    } catch {
+      if (!silent) setAuthError("Cannot verify password. Please try again.");
+    }
+  }, []);
+
   useEffect(() => {
+    const token = sessionStorage.getItem("report_token");
+    if (token) {
+      verifyToken(token, true).finally(() => setCheckingAuth(false));
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [verifyToken]);
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!password.trim()) return;
+    setLogging(true);
+    setAuthError("");
+    await verifyToken(password);
+    setLogging(false);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("report_token");
+    setAuthed(false);
+    setPassword("");
+  };
+
+  useEffect(() => {
+    if (!authed) return;
     fetch("/api/students")
       .then((r) => r.json())
       .then((d) => {
@@ -89,7 +138,7 @@ export default function ReportPage() {
         setCategories(d.categories ?? []);
       })
       .catch(() => setError("Failed to load student data"));
-  }, []);
+  }, [authed]);
 
   const addNumFilter = () => {
     setNumFilters((f) => [...f, { id: nextId++, field: "cgpa", operator: ">", value: "" }]);
@@ -350,9 +399,70 @@ export default function ReportPage() {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+        <SrmHeader />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center text-gray-400 text-sm">
+          Checking access…
+        </div>
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+        <SrmHeader />
+        <div className="flex-1 flex items-center justify-center py-16">
+          <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-4">
+            <h2 className="text-sm font-bold text-[#1a237e] uppercase tracking-widest text-center">
+              Report Access
+            </h2>
+            <p className="text-xs text-gray-500 text-center">
+              Enter the password to view and generate placement reports.
+            </p>
+            <form className="w-full flex flex-col gap-3" onSubmit={handleLogin}>
+              <input
+                type="password"
+                autoFocus
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-gray-50 focus:border-[#1565c0] text-center"
+              />
+              {authError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center">
+                  {authError}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={logging || !password.trim()}
+                className="w-full bg-[#1565c0] hover:bg-[#1255a5] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm uppercase tracking-widest transition-colors"
+              >
+                {logging ? "Verifying…" : "Unlock Reports"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
-      <SrmHeader />
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <SrmHeader />
+        </div>
+        <button
+          onClick={handleLogout}
+          className="shrink-0 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+        >
+          Sign Out
+        </button>
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
