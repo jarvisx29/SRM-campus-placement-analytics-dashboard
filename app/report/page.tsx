@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import SrmHeader from "@/components/SrmHeader";
+import MultiSelect from "@/components/MultiSelect";
 import { StudentRow } from "@/types";
 
 interface ReportStudent extends StudentRow {
@@ -27,6 +28,12 @@ const PLACED_LABELS: Record<string, string> = {
   NO: "Not Placed",
   NE: "Not Eligible",
   NA: "Not Applicable (HS)",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  PLACEMENT: "Placement",
+  HS: "Higher Studies",
+  E: "Entrepreneurship",
 };
 
 const SORT_FIELDS = [
@@ -67,9 +74,9 @@ export default function ReportPage() {
   const [departments, setDepartments] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
 
-  const [dept, setDept] = useState("");
-  const [category, setCategory] = useState("");
-  const [placedStatus, setPlacedStatus] = useState("");
+  const [depts, setDepts] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [numFilters, setNumFilters] = useState<NumericFilter[]>([]);
   const [sortField, setSortField] = useState("studentName");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -153,9 +160,9 @@ export default function ReportPage() {
   const applyFilters = useCallback(() => {
     let result = [...allStudents];
 
-    if (dept) result = result.filter((s) => s.dept === dept);
-    if (category) result = result.filter((s) => s.category === category);
-    if (placedStatus) result = result.filter((s) => s.placed === placedStatus);
+    if (depts.length) result = result.filter((s) => depts.includes(s.dept));
+    if (selectedCategories.length) result = result.filter((s) => selectedCategories.includes(s.category));
+    if (selectedStatuses.length) result = result.filter((s) => selectedStatuses.includes(s.placed));
 
     for (const f of numFilters) {
       if (!f.value.trim()) continue;
@@ -177,7 +184,7 @@ export default function ReportPage() {
     setFiltered(result);
     setApplied(true);
     setPreviewPage(1);
-  }, [allStudents, dept, category, placedStatus, numFilters, sortField, sortDir]);
+  }, [allStudents, depts, selectedCategories, selectedStatuses, numFilters, sortField, sortDir]);
 
   const buildRows = () =>
     filtered.map((s, i) => [
@@ -218,9 +225,9 @@ export default function ReportPage() {
       doc.setFont("helvetica", "normal");
 
       const filterDesc = [
-        dept && `Dept: ${dept}`,
-        category && `Category: ${category}`,
-        placedStatus && `Status: ${placedStatus}`,
+        depts.length && `Dept: ${depts.join(", ")}`,
+        selectedCategories.length && `Category: ${selectedCategories.map((c) => CATEGORY_LABELS[c] ?? c).join(", ")}`,
+        selectedStatuses.length && `Status: ${selectedStatuses.map((s) => PLACED_LABELS[s] ?? s).join(", ")}`,
         ...numFilters.filter((f) => f.value).map((f) => `${FIELD_LABELS[f.field]} ${f.operator} ${f.value}`),
       ].filter(Boolean).join("  |  ") || "All Students";
 
@@ -314,9 +321,9 @@ export default function ReportPage() {
       const rows = buildRows();
       const date = new Date().toLocaleDateString("en-IN");
       const filterDesc = [
-        dept && `Department: ${dept}`,
-        category && `Category: ${category}`,
-        placedStatus && `Status: ${PLACED_LABELS[placedStatus] ?? placedStatus}`,
+        depts.length && `Department: ${depts.join(", ")}`,
+        selectedCategories.length && `Category: ${selectedCategories.map((c) => CATEGORY_LABELS[c] ?? c).join(", ")}`,
+        selectedStatuses.length && `Status: ${selectedStatuses.map((s) => PLACED_LABELS[s] ?? s).join(", ")}`,
         ...numFilters.filter((f) => f.value).map((f) => `${FIELD_LABELS[f.field]} ${f.operator} ${f.value}`),
       ].filter(Boolean).join(" | ") || "All Students";
 
@@ -478,43 +485,29 @@ export default function ReportPage() {
 
           {/* Basic filters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Department</label>
-              <select
-                value={dept}
-                onChange={(e) => setDept(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none bg-gray-50 focus:border-[#1565c0]"
-              >
-                <option value="">All Departments</option>
-                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
+            <MultiSelect
+              label="Department"
+              options={departments.map((d) => ({ value: d, label: d }))}
+              selected={depts}
+              onChange={setDepts}
+              placeholder="All Departments"
+            />
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none bg-gray-50 focus:border-[#1565c0]"
-              >
-                <option value="">All Categories</option>
-                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            <MultiSelect
+              label="Category"
+              options={categories.map((c) => ({ value: c, label: CATEGORY_LABELS[c] ?? c }))}
+              selected={selectedCategories}
+              onChange={setSelectedCategories}
+              placeholder="All Categories"
+            />
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Placed Status</label>
-              <select
-                value={placedStatus}
-                onChange={(e) => setPlacedStatus(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none bg-gray-50 focus:border-[#1565c0]"
-              >
-                <option value="">All</option>
-                {Object.entries(PLACED_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-            </div>
+            <MultiSelect
+              label="Placed Status"
+              options={Object.entries(PLACED_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              selected={selectedStatuses}
+              onChange={setSelectedStatuses}
+              placeholder="All"
+            />
           </div>
 
           {/* Numeric filters */}
@@ -621,7 +614,11 @@ export default function ReportPage() {
                 {filtered.length} Student{filtered.length !== 1 ? "s" : ""} Match
               </h2>
               <p className="text-white/70 text-xs mt-0.5">
-                {[dept, category, placedStatus && PLACED_LABELS[placedStatus]].filter(Boolean).join(" · ") || "No basic filters applied"}
+                {[
+                  depts.length && depts.join(", "),
+                  selectedCategories.length && selectedCategories.map((c) => CATEGORY_LABELS[c] ?? c).join(", "),
+                  selectedStatuses.length && selectedStatuses.map((s) => PLACED_LABELS[s] ?? s).join(", "),
+                ].filter(Boolean).join(" · ") || "No basic filters applied"}
               </p>
             </div>
             <div className="flex gap-2">
