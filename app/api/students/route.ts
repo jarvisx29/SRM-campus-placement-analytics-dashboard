@@ -206,6 +206,9 @@ export async function GET(request: Request) {
         gender: s.gender,
         dob: s.dob,
         resumeLink: s.resumeLink,
+        officialMail: s.officialMail,
+        personalMail: s.personalMail,
+        phone: s.phone,
       })),
     });
   } catch (err) {

@@ -203,10 +203,13 @@ export default function ReportPage() {
       s.offerType || "—",
       s.offer1 || "—",
       s.mentor || "—",
+      s.officialMail || "—",
+      s.personalMail || "—",
+      s.phone || "—",
       s.resumeLink || "—",
     ]);
 
-  const HEADERS = ["#", "Reg No", "Name", "Dept", "Class", "Gender", "DOB", "Category", "Status", "10th%", "12th%", "CGPA", "Offer Type", "Company", "Mentor", "Resume Link"];
+  const HEADERS = ["#", "Reg No", "Name", "Dept", "Class", "Gender", "DOB", "Category", "Status", "10th%", "12th%", "CGPA", "Offer Type", "Company", "Mentor", "Official Mail", "Personal Mail", "Phone", "Resume Link"];
 
   const downloadPDF = async () => {
     setGenerating("pdf");
@@ -245,22 +248,25 @@ export default function ReportPage() {
         headStyles: { fillColor: [21, 101, 192], textColor: 255, fontStyle: "bold", fontSize: 7 },
         alternateRowStyles: { fillColor: [240, 244, 248] },
         columnStyles: {
-          0: { cellWidth: 7 },
-          1: { cellWidth: 20 },
-          2: { cellWidth: 26 },
-          3: { cellWidth: 13 },
-          4: { cellWidth: 15 },
-          5: { cellWidth: 11 },
-          6: { cellWidth: 16 },
-          7: { cellWidth: 15 },
-          8: { cellWidth: 13 },
-          9: { cellWidth: 10 },
-          10: { cellWidth: 10 },
-          11: { cellWidth: 10 },
-          12: { cellWidth: 16 },
-          13: { cellWidth: 20 },
-          14: { cellWidth: 20 },
-          15: { cellWidth: "auto" },
+          0: { cellWidth: 6 },
+          1: { cellWidth: 18 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 11 },
+          4: { cellWidth: 13 },
+          5: { cellWidth: 9 },
+          6: { cellWidth: 14 },
+          7: { cellWidth: 13 },
+          8: { cellWidth: 11 },
+          9: { cellWidth: 9 },
+          10: { cellWidth: 9 },
+          11: { cellWidth: 9 },
+          12: { cellWidth: 14 },
+          13: { cellWidth: 16 },
+          14: { cellWidth: 16 },
+          15: { cellWidth: 26 },
+          16: { cellWidth: 26 },
+          17: { cellWidth: 14 },
+          18: { cellWidth: "auto" },
         },
         didParseCell: (data) => {
           if (data.section === "body" && data.column.index === RESUME_COL && isUrl(String(data.cell.raw ?? ""))) {
@@ -690,6 +696,9 @@ export default function ReportPage() {
                           <td className="px-3 py-2 font-medium" style={{ color: s.offerType ? "#7b1fa2" : "#9ca3af" }}>{s.offerType || "—"}</td>
                           <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{s.offer1 || "—"}</td>
                           <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{s.mentor || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 text-xs whitespace-nowrap">{s.officialMail || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 text-xs whitespace-nowrap">{s.personalMail || "—"}</td>
+                          <td className="px-3 py-2 text-gray-600 text-xs whitespace-nowrap">{s.phone || "—"}</td>
                           <td className="px-3 py-2 text-xs max-w-[160px]">
                             {s.resumeLink ? (
                               /^https?:\/\//i.test(s.resumeLink) ? (

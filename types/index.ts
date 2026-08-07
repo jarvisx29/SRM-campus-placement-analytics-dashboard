@@ -19,6 +19,9 @@ export interface StudentRow {
   gender: string;
   dob: string;
   resumeLink: string;
+  officialMail: string;
+  personalMail: string;
+  phone: string;
 }
 
 export interface HavlocRow {
