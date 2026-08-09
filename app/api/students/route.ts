@@ -154,10 +154,12 @@ export async function GET(request: Request) {
 
     const offerTypeCounts = { Dream: 0, "Super Dream": 0, Marquee: 0, Normal: 0 };
     students.forEach((s) => {
-      const ot = s.offerType?.trim();
-      if (ot && ot in offerTypeCounts) {
-        offerTypeCounts[ot as keyof typeof offerTypeCounts]++;
-      }
+      const tokens = (s.offerType || "").split(",").map((t) => t.trim());
+      tokens.forEach((ot) => {
+        if (ot && ot in offerTypeCounts) {
+          offerTypeCounts[ot as keyof typeof offerTypeCounts]++;
+        }
+      });
     });
 
     const mentors = [

@@ -56,7 +56,11 @@ export default function StudentDetailPage() {
   ].sort();
 
   const offerCategories = [
-    ...new Set(allStudents.map((s) => s.offerType).filter(Boolean)),
+    ...new Set(
+      allStudents.flatMap((s) =>
+        (s.offerType || "").split(",").map((t) => t.trim()).filter(Boolean)
+      )
+    ),
   ].sort();
 
   const filtered: StudentRow[] = allStudents.filter((s) => {
@@ -74,7 +78,9 @@ export default function StudentDetailPage() {
       [s.offer1, s.offer2, s.offer3, s.offer4, s.offer5, s.offer6].some(
         (o) => o === company
       );
-    const matchOfferCategory = !offerCategory || s.offerType === offerCategory;
+    const matchOfferCategory =
+      !offerCategory ||
+      (s.offerType || "").split(",").map((t) => t.trim()).includes(offerCategory);
     return matchSearch && matchCompany && matchOfferCategory;
   });
 

@@ -56,14 +56,16 @@ function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors:
     if (row[18] === "YES") s.placed++;
     if ((row[1] || "").trim().toUpperCase() === "HS") s.higherStudies++;
 
-    const offerType = row[20]?.trim();
+    const offerTypeTokens = (row[20] || "").split(",").map((t) => t.trim());
     const offers = [row[21], row[22], row[23], row[24], row[25], row[26]].filter(Boolean).length;
     s.totalOffers += offers;
 
-    if (offerType === "Normal") s.Normal++;
-    else if (offerType === "Dream") s.Dream++;
-    else if (offerType === "Super Dream") s["Super Dream"]++;
-    else if (offerType === "Marquee") s.Marquee++;
+    offerTypeTokens.forEach((offerType) => {
+      if (offerType === "Normal") s.Normal++;
+      else if (offerType === "Dream") s.Dream++;
+      else if (offerType === "Super Dream") s["Super Dream"]++;
+      else if (offerType === "Marquee") s.Marquee++;
+    });
   }
 
   const mentorStats = Array.from(map.values());
