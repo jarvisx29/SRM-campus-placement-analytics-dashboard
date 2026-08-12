@@ -2,11 +2,48 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID!;
+const COMPANIES_RANGE = "Companies!A:H";
 const CACHE_TTL = 5 * 60 * 1000;
+
+// GDS company names that don't exactly match their entry in the Companies tab
+// (confirmed 2026-08-12: both are typed slightly differently but same category)
+const COMPANY_ALIASES: Record<string, string> = {
+  "INFOSYS HACK": "INFOSYS HACKWITHINFY",
+  "THINK EDGES": "THINK EDGES (BDA)",
+};
 
 type RawRow = string[];
 
-let cache: { rows: RawRow[]; ts: number } | null = null;
+let cache: { rows: RawRow[]; companyCategoryMap: Map<string, string>; ts: number } | null = null;
+
+function normalizeOfferCategory(raw: string): string | null {
+  const c = (raw || "").trim().toUpperCase();
+  if (c === "SD" || c === "SUPER DREAM") return "Super Dream";
+  if (c === "MARQUEE") return "Marquee";
+  if (c === "DREAM") return "Dream";
+  if (c === "NORMAL") return "Normal";
+  return null;
+}
+
+async function fetchCompanyCategoryMap(
+  sheets: ReturnType<typeof google.sheets>
+): Promise<Map<string, string>> {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: COMPANIES_RANGE,
+  });
+  const rows = response.data.values;
+  const map = new Map<string, string>();
+  if (!rows || rows.length < 2) return map;
+
+  const [, ...dataRows] = rows;
+  dataRows.forEach((row) => {
+    const name = (row[0] || "").trim().toUpperCase();
+    const category = normalizeOfferCategory(row[7] || "");
+    if (name && category && !map.has(name)) map.set(name, category);
+  });
+  return map;
+}
 
 interface MentorStat {
   mentor: string;
@@ -25,23 +62,29 @@ function getDept(cls: string): string {
   return parts.length <= 1 ? cls.trim() : parts.slice(0, -1).join(" ");
 }
 
-async function fetchAll(): Promise<RawRow[]> {
+async function fetchAll(): Promise<{ rows: RawRow[]; companyCategoryMap: Map<string, string> }> {
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
   const sheets = google.sheets({ version: "v4", auth });
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: "GDS!A:AC",
-  });
+  const [res, companyCategoryMap] = await Promise.all([
+    sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "GDS!A:AC",
+    }),
+    fetchCompanyCategoryMap(sheets),
+  ]);
   const rows = res.data.values;
-  if (!rows || rows.length < 2) return [];
+  if (!rows || rows.length < 2) return { rows: [], companyCategoryMap };
   const [, ...data] = rows;
-  return data.filter((row) => row[1] || row[16] || row[17]);
+  return { rows: data.filter((row) => row[1] || row[16] || row[17]), companyCategoryMap };
 }
 
-function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors: string[] } {
+function buildMentorStats(
+  rows: RawRow[],
+  companyCategoryMap: Map<string, string>
+): { mentorStats: MentorStat[]; mentors: string[] } {
   const map = new Map<string, MentorStat>();
 
   for (const row of rows) {
@@ -56,15 +99,18 @@ function buildMentorStats(rows: RawRow[]): { mentorStats: MentorStat[]; mentors:
     if (row[18] === "YES") s.placed++;
     if ((row[1] || "").trim().toUpperCase() === "HS") s.higherStudies++;
 
-    const offerTypeTokens = (row[20] || "").split(",").map((t) => t.trim());
-    const offers = [row[21], row[22], row[23], row[24], row[25], row[26]].filter(Boolean).length;
-    s.totalOffers += offers;
+    const offerCompanies = [row[21], row[22], row[23], row[24], row[25], row[26]].filter(Boolean);
+    s.totalOffers += offerCompanies.length;
 
-    offerTypeTokens.forEach((offerType) => {
-      if (offerType === "Normal") s.Normal++;
-      else if (offerType === "Dream") s.Dream++;
-      else if (offerType === "Super Dream") s["Super Dream"]++;
-      else if (offerType === "Marquee") s.Marquee++;
+    offerCompanies.forEach((company) => {
+      const key = company.trim().toUpperCase();
+      const category =
+        companyCategoryMap.get(key) ??
+        (COMPANY_ALIASES[key] ? companyCategoryMap.get(COMPANY_ALIASES[key]) : undefined);
+      if (category === "Normal") s.Normal++;
+      else if (category === "Dream") s.Dream++;
+      else if (category === "Super Dream") s["Super Dream"]++;
+      else if (category === "Marquee") s.Marquee++;
     });
   }
 
@@ -80,8 +126,8 @@ export async function GET(request: Request) {
 
   try {
     if (!cache || Date.now() - cache.ts > CACHE_TTL) {
-      const rows = await fetchAll();
-      cache = { rows, ts: Date.now() };
+      const { rows, companyCategoryMap } = await fetchAll();
+      cache = { rows, companyCategoryMap, ts: Date.now() };
     }
 
     const allRows = cache.rows;
@@ -94,7 +140,7 @@ export async function GET(request: Request) {
       ? allRows.filter((r) => getDept(r[15] || "") === deptFilter)
       : allRows;
 
-    const { mentorStats, mentors } = buildMentorStats(filteredRows);
+    const { mentorStats, mentors } = buildMentorStats(filteredRows, cache.companyCategoryMap);
 
     if (mentorFilter) {
       const found = mentorStats.find((m) => m.mentor === mentorFilter);

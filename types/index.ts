@@ -22,6 +22,7 @@ export interface StudentRow {
   officialMail: string;
   personalMail: string;
   phone: string;
+  offerCategories: string[];
 }
 
 export interface HavlocRow {
