@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import SrmHeader from "@/components/SrmHeader";
 import MultiSelect from "@/components/MultiSelect";
 import { StudentRow } from "@/types";
@@ -469,6 +470,12 @@ export default function ReportPage() {
         <div className="flex-1">
           <SrmHeader />
         </div>
+        <Link
+          href="/mentor-report/admin"
+          className="shrink-0 bg-[#1565c0] hover:bg-[#1255a5] text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
+        >
+          View Submitted Reports
+        </Link>
         <button
           onClick={handleLogout}
           className="shrink-0 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"

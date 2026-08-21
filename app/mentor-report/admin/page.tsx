@@ -37,10 +37,10 @@ export default function MentorAdminPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        sessionStorage.setItem("mentor_admin_token", token);
+        sessionStorage.setItem("report_token", token);
         setAuthed(true);
       } else {
-        sessionStorage.removeItem("mentor_admin_token");
+        sessionStorage.removeItem("report_token");
         setAuthed(false);
         if (!silent) setAuthError("Incorrect password. Please try again.");
       }
@@ -50,7 +50,7 @@ export default function MentorAdminPage() {
   }, []);
 
   useEffect(() => {
-    const token = sessionStorage.getItem("mentor_admin_token");
+    const token = sessionStorage.getItem("report_token");
     if (token) {
       verifyToken(token, true).finally(() => setCheckingAuth(false));
     } else {
@@ -68,14 +68,14 @@ export default function MentorAdminPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("mentor_admin_token");
+    sessionStorage.removeItem("report_token");
     setAuthed(false);
     setPassword("");
   };
 
   useEffect(() => {
     if (!authed) return;
-    const token = sessionStorage.getItem("mentor_admin_token") || "";
+    const token = sessionStorage.getItem("report_token") || "";
     fetch("/api/mentor-portal/reports", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -173,8 +173,8 @@ export default function MentorAdminPage() {
         </button>
       </div>
 
-      <Link href="/mentor-report" className="text-xs font-semibold text-[#1565c0] hover:underline w-fit">
-        ← Back to Mentors
+      <Link href="/report" className="text-xs font-semibold text-[#1565c0] hover:underline w-fit">
+        ← Back to Admin Reports
       </Link>
 
       {error && (

@@ -360,12 +360,6 @@ export default function MentorReportPage() {
         >
           Upload Progress Report
         </Link>
-        <Link
-          href="/mentor-report/admin"
-          className="border border-gray-200 hover:border-[#1565c0] text-gray-600 hover:text-[#1565c0] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wide transition-colors"
-        >
-          View Submitted Reports (Admin)
-        </Link>
       </div>
 
       {error && (
