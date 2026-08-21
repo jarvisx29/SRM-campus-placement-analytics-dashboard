@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import SrmHeader from "@/components/SrmHeader";
 import StatCard from "@/components/StatCard";
 import DataTable from "@/components/DataTable";
@@ -351,6 +352,21 @@ export default function MentorReportPage() {
   return (
     <div className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
       <SrmHeader />
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <Link
+          href="/mentor-report/upload"
+          className="bg-[#1565c0] hover:bg-[#1255a5] text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wide transition-colors"
+        >
+          Upload Progress Report
+        </Link>
+        <Link
+          href="/mentor-report/admin"
+          className="border border-gray-200 hover:border-[#1565c0] text-gray-600 hover:text-[#1565c0] text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wide transition-colors"
+        >
+          View Submitted Reports (Admin)
+        </Link>
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
