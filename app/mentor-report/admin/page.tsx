@@ -20,6 +20,21 @@ const HEADERS = [
   "Minutes", "Present Reg Nos", "Absent Reg Nos", "Report Link",
 ];
 
+const PAGE_SIZE = 20;
+
+const MONTH_LABEL = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" });
+
+function monthKey(dateStr: string): string {
+  // meetingDate comes from an <input type="date"> as YYYY-MM-DD
+  const m = dateStr.match(/^(\d{4})-(\d{2})/);
+  return m ? `${m[1]}-${m[2]}` : "";
+}
+
+function monthLabel(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  return MONTH_LABEL.format(new Date(year, month - 1, 1));
+}
+
 export default function MentorAdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -30,6 +45,10 @@ export default function MentorAdminPage() {
   const [reports, setReports] = useState<MentorReportRow[]>([]);
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
+
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMentor, setSelectedMentor] = useState("");
+  const [page, setPage] = useState(1);
 
   const verifyToken = useCallback(async (token: string, silent = false) => {
     try {
@@ -84,11 +103,30 @@ export default function MentorAdminPage() {
       .catch(() => setError("Failed to load submitted reports"));
   }, [authed]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [selectedMonth, selectedMentor]);
+
+  const monthOptions = Array.from(
+    new Set(reports.map((r) => monthKey(r.meetingDate)).filter(Boolean))
+  ).sort();
+
+  const mentorOptions = Array.from(new Set(reports.map((r) => r.mentorName).filter(Boolean))).sort();
+
+  const filteredReports = reports.filter((r) => {
+    if (selectedMonth && monthKey(r.meetingDate) !== selectedMonth) return false;
+    if (selectedMentor && r.mentorName !== selectedMentor) return false;
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredReports.length / PAGE_SIZE));
+  const pagedReports = filteredReports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const downloadXLSX = async () => {
     setDownloading(true);
     try {
       const XLSX = await import("xlsx");
-      const rows = reports.map((r) => [
+      const rows = filteredReports.map((r) => [
         r.timestamp, r.mentorName, r.meetingDate, r.meetingLink,
         r.minutes, r.presentRegNos, r.absentRegNos, r.reportLink,
       ]);
@@ -183,13 +221,44 @@ export default function MentorAdminPage() {
         </div>
       )}
 
+      <div className="flex items-center gap-3 flex-wrap">
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-600 outline-none bg-white focus:border-[#1565c0]"
+        >
+          <option value="">All Months</option>
+          {monthOptions.map((m) => (
+            <option key={m} value={m}>{monthLabel(m)}</option>
+          ))}
+        </select>
+        <select
+          value={selectedMentor}
+          onChange={(e) => setSelectedMentor(e.target.value)}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-600 outline-none bg-white focus:border-[#1565c0]"
+        >
+          <option value="">All Mentors</option>
+          {mentorOptions.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        {(selectedMonth || selectedMentor) && (
+          <button
+            onClick={() => { setSelectedMonth(""); setSelectedMentor(""); }}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-3 py-1.5 rounded-full transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <p className="text-sm font-semibold text-gray-700">
-          {reports.length} submitted report{reports.length === 1 ? "" : "s"}
+          {filteredReports.length} of {reports.length} submitted report{reports.length === 1 ? "" : "s"}
         </p>
         <button
           onClick={downloadXLSX}
-          disabled={downloading || reports.length === 0}
+          disabled={downloading || filteredReports.length === 0}
           className="bg-[#2e7d32] hover:bg-[#256428] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide transition-colors"
         >
           {downloading ? "Preparing…" : "Download XLSX"}
@@ -208,14 +277,16 @@ export default function MentorAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {reports.length === 0 ? (
+            {filteredReports.length === 0 ? (
               <tr>
                 <td colSpan={HEADERS.length} className="px-3 py-8 text-center text-gray-400">
-                  No progress reports submitted yet.
+                  {reports.length === 0
+                    ? "No progress reports submitted yet."
+                    : "No reports match the selected filters."}
                 </td>
               </tr>
             ) : (
-              reports.map((r, i) => (
+              pagedReports.map((r, i) => (
                 <tr key={i} className={i % 2 !== 0 ? "bg-gray-50" : ""}>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : "—"}
@@ -245,6 +316,26 @@ export default function MentorAdminPage() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 hover:border-[#1565c0] transition-colors"
+          >
+            Prev
+          </button>
+          <span className="text-xs font-semibold text-gray-500">Page {page} of {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 hover:border-[#1565c0] transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
