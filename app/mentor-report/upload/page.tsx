@@ -77,10 +77,13 @@ export default function MentorUploadPage() {
         <p className="text-xs text-gray-500 text-center">
           Log your weekly/regular meeting with your allocated students.
         </p>
+        <p className="text-xs text-gray-500 text-center">
+          <span className="text-red-500">*</span> Mandatory field
+        </p>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <div>
-            <label className={labelClass}>Mentor Name</label>
+            <label className={labelClass}>Mentor Name <span className="text-red-500">*</span></label>
             <select
               required
               value={form.mentorName}
@@ -95,7 +98,7 @@ export default function MentorUploadPage() {
           </div>
 
           <div>
-            <label className={labelClass}>Faculty ID (Password)</label>
+            <label className={labelClass}>Faculty ID (Password) <span className="text-red-500">*</span></label>
             <input
               required
               type="password"
@@ -108,7 +111,7 @@ export default function MentorUploadPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Meeting Date</label>
+              <label className={labelClass}>Meeting Date <span className="text-red-500">*</span></label>
               <input
                 required
                 type="date"
@@ -118,7 +121,7 @@ export default function MentorUploadPage() {
               />
             </div>
             <div>
-              <label className={labelClass}>Meeting Link</label>
+              <label className={labelClass}>Meeting Link <span className="text-red-500">*</span></label>
               <input
                 required
                 type="url"
@@ -165,7 +168,7 @@ export default function MentorUploadPage() {
           </div>
 
           <div>
-            <label className={labelClass}>Report Link</label>
+            <label className={labelClass}>Report Link <span className="text-red-500">*</span></label>
             <input
               required
               type="url"
