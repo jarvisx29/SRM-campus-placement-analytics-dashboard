@@ -70,9 +70,9 @@ export async function POST(request: Request) {
     const absentRegNos = (body.absentRegNos || "").trim();
     const reportLink = (body.reportLink || "").trim();
 
-    if (!mentorName || !facultyId || !meetingDate) {
+    if (!mentorName || !facultyId || !meetingDate || !meetingLink || !reportLink) {
       return NextResponse.json(
-        { error: "Mentor name, Faculty ID, and Meeting Date are required" },
+        { error: "Mentor name, Faculty ID, Meeting Date, Meeting Link, and Report Link are required" },
         { status: 400 }
       );
     }

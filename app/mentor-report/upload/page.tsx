@@ -120,6 +120,7 @@ export default function MentorUploadPage() {
             <div>
               <label className={labelClass}>Meeting Link</label>
               <input
+                required
                 type="url"
                 value={form.meetingLink}
                 onChange={(e) => update("meetingLink", e.target.value)}
@@ -166,6 +167,7 @@ export default function MentorUploadPage() {
           <div>
             <label className={labelClass}>Report Link</label>
             <input
+              required
               type="url"
               value={form.reportLink}
               onChange={(e) => update("reportLink", e.target.value)}

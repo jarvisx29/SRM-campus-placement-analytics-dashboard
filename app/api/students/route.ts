@@ -14,6 +14,7 @@ const CACHE_TTL = 5 * 60 * 1000;
 const COMPANY_ALIASES: Record<string, string> = {
   "INFOSYS HACK": "INFOSYS HACKWITHINFY",
   "THINK EDGES": "THINK EDGES (BDA)",
+  "UBS": "UBS BUSINESS SOLUTIONS",
 };
 
 interface DeptStats {
