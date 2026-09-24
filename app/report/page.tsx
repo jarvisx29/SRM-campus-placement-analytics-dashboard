@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import SrmHeader from "@/components/SrmHeader";
 import MultiSelect from "@/components/MultiSelect";
+import MentorStatusCard from "@/components/MentorStatusCard";
 import { StudentRow } from "@/types";
 
 interface ReportStudent extends StudentRow {
@@ -487,6 +488,8 @@ export default function ReportPage() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
       )}
+
+      <MentorStatusCard students={allStudents} />
 
       {/* ── FILTER CARD ── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
