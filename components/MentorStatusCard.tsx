@@ -80,7 +80,7 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
           <p className="text-xs text-gray-500 flex-1 min-w-[200px]">
             {rows.length === 0
               ? "Loading mentor data…"
-              : `${rows.length} mentors · ${totals.allocated} students allocated · ${totals.placed} placed · ${totals.yetToBePlaced} yet to be placed · ${totals.higherStudies} higher studies · ${totals.notEligible} not eligible. Numbers are live from the sheet; the PDF/DOCX include signature space for the Placement Coordinator and HOD.`}
+              : `${rows.length} mentors · ${totals.allocated} students allocated · ${totals.placed} placed · ${totals.yetToBePlaced} yet to be placed · ${totals.higherStudies} higher studies · ${totals.notEligible} not eligible.`}
           </p>
 
           <div className="flex gap-2">
