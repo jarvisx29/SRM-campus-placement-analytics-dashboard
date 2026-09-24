@@ -6,6 +6,7 @@ import {
   buildMentorStatus,
   createMentorStatusDocxBlob,
   createMentorStatusPdf,
+  MENTOR_STATUS_HEADERS,
   monthTitle,
 } from "@/lib/mentorStatus";
 
@@ -18,6 +19,7 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
   const [month, setMonth] = useState(currentMonthValue);
   const [generating, setGenerating] = useState<"pdf" | "docx" | null>(null);
   const [error, setError] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
 
   const { rows, totals } = useMemo(() => buildMentorStatus(students), [students]);
   const label = monthTitle(month);
@@ -77,7 +79,14 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
             />
           </div>
 
-          <div className="flex gap-2 sm:ml-auto">
+          <div className="flex gap-2 sm:ml-auto flex-wrap">
+            <button
+              onClick={() => setShowDetails((v) => !v)}
+              disabled={rows.length === 0}
+              className="bg-[#2e7d32] hover:bg-[#1b5e20] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg uppercase tracking-wide transition-colors"
+            >
+              {showDetails ? "Hide" : "View"}
+            </button>
             <button
               onClick={downloadPDF}
               disabled={disabled}
@@ -113,6 +122,37 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
                 <tr className="text-gray-800 font-semibold text-sm">
                   {[rows.length, totals.allocated, totals.placed, totals.yetToBePlaced, totals.higherStudies, totals.notEligible].map((v, i) => (
                     <td key={i} className="px-3 py-2 text-center border border-gray-200">{v}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {showDetails && rows.length > 0 && (
+          <div className="max-h-[480px] overflow-auto border border-gray-200 rounded-lg">
+            <table className="min-w-full text-xs">
+              <thead className="sticky top-0">
+                <tr className="bg-[#1565c0] text-white">
+                  {MENTOR_STATUS_HEADERS.map((h) => (
+                    <th key={h} className="px-3 py-2 font-bold text-center whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={r.mentor} className={i % 2 === 0 ? "bg-white" : "bg-[#f0f4f8]"}>
+                    <td className="px-3 py-1.5 text-center text-gray-500">{i + 1}</td>
+                    <td className="px-3 py-1.5 text-gray-800 font-medium whitespace-nowrap">{r.mentor}</td>
+                    {[r.allocated, r.higherStudies, r.removed, r.placed, r.yetToBePlaced, r.notEligible].map((v, c) => (
+                      <td key={c} className="px-3 py-1.5 text-center text-gray-700">{v}</td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="bg-gray-100 font-bold text-gray-900">
+                  <td colSpan={2} className="px-3 py-2 text-center">TOTAL</td>
+                  {[totals.allocated, totals.higherStudies, totals.removed, totals.placed, totals.yetToBePlaced, totals.notEligible].map((v, c) => (
+                    <td key={c} className="px-3 py-2 text-center">{v}</td>
                   ))}
                 </tr>
               </tbody>
