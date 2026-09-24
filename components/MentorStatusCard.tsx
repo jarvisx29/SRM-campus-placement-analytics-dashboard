@@ -77,13 +77,7 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
             />
           </div>
 
-          <p className="text-xs text-gray-500 flex-1 min-w-[200px]">
-            {rows.length === 0
-              ? "Loading mentor data…"
-              : `${rows.length} mentors · ${totals.allocated} students allocated · ${totals.placed} placed · ${totals.yetToBePlaced} yet to be placed · ${totals.higherStudies} higher studies · ${totals.notEligible} not eligible.`}
-          </p>
-
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:ml-auto">
             <button
               onClick={downloadPDF}
               disabled={disabled}
@@ -100,6 +94,31 @@ export default function MentorStatusCard({ students }: { students: StudentRow[] 
             </button>
           </div>
         </div>
+
+        {rows.length === 0 ? (
+          <p className="text-xs text-gray-400">Loading mentor data…</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border border-gray-200">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600">
+                  {["Mentors", "Students Allocated", "Placed", "Yet to be placed", "Higher Studies", "Not Eligible"].map((h) => (
+                    <th key={h} className="px-3 py-2 font-bold uppercase tracking-wide text-center whitespace-nowrap border border-gray-200">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-gray-800 font-semibold text-sm">
+                  {[rows.length, totals.allocated, totals.placed, totals.yetToBePlaced, totals.higherStudies, totals.notEligible].map((v, i) => (
+                    <td key={i} className="px-3 py-2 text-center border border-gray-200">{v}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">{error}</div>
